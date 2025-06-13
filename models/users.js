@@ -23,13 +23,19 @@ const Users = mongoose.model("Users", userSchema);
 /* ------------------------- User Model Functions  -------------------------*/
 async function createAccount(fields) {
   // check if the user already exists
-  const existingUser = await Users.findOne({
-    email: fields.email,
-  });
+  const existingEmail = await get({ email: fields.email });
 
-  if (existingUser) {
-    // Return error if user already exists.
+  // check if phone already exists
+  const existingPhone = await get({ phone: fields.phone });
+
+  if (existingEmail) {
+    // Throw error if email already exists.
     throw new CustomError("Email already in use!", 400);
+  }
+
+  if (existingPhone) {
+    // Throw error if phone number already exists.
+    throw new CustomError("Phone number is already in use!", 400);
   }
 
   // Hash the password
@@ -76,7 +82,71 @@ async function createAccount(fields) {
   }
 }
 
+async function get(params) {
+  try {
+    const user = Users.findOne(params);
+    return user;
+  } catch (error) {
+    throw new CustomError("User not found!", 404);
+  }
+}
+
+async function loginWithEmailOrPhone(fields, user, existingToken) {
+  // check password validity
+  const passwordCorrect = await bcrypt.compare(fields.password, user.password);
+
+  if (!passwordCorrect) {
+    throw new CustomError("Invalid password!", 400);
+  }
+
+  // create an access token
+  const accessToken = jwt.sign(
+    { userId: user._id, role: user.role },
+    JWT_TOKEN_SECRET,
+    { algorithm: "HS256", expiresIn: "1h" }
+  );
+
+  // check if a valid refresh token existings if not create another
+  let refreshToken = null;
+
+  if (existingToken) {
+    // verify signature
+    try {
+      const decoded = jwt.verify(existingToken, JWT_REFRESH_SECRET);
+      refreshToken = existingToken;
+    } catch (err) {
+      refreshToken = jwt.sign(
+        { userId: user._id, role: user.role },
+        JWT_REFRESH_SECRET,
+        {
+          algorithm: "HS256",
+          expiresIn: "7d",
+        }
+      );
+    }
+  } else {
+    // create one if it does not exist
+    refreshToken = jwt.sign(
+      { userId: user._id, role: user.role },
+      JWT_REFRESH_SECRET,
+      {
+        algorithm: "HS256",
+        expiresIn: "7d",
+      }
+    );
+  }
+  // return a result object
+  return {
+    accessToken,
+    refreshToken,
+    success: true,
+    message: "Login successful.",
+  };
+}
+
 // Export the user methods
 module.exports = {
   createAccount,
+  loginWithEmailOrPhone,
+  get,
 };
