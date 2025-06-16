@@ -22,28 +22,28 @@ async function register(req, res, next) {
 }
 
 async function login(req, res, next) {
-  const fields = req.body;
+  const user = req.user;
   const existingToken = req.cookies.refreshToken;
 
-  const filter = fields.email
-    ? { email: fields.email }
-    : { phone: fields.phone };
-
-  // Get the user object
-  const user =  await Users.get(filter);
-
-  // login with email
+  // Try to create new tokens
   try {
-    const { refreshToken, ...result } = await Users.loginWithEmailOrPhone(
-      fields,
+    const { refreshToken, accessToken } = await Users.createTokens(
       user,
       existingToken
     );
 
+    // TODO: include secure true in cookie options
     // set the refresh token in cookie
-    res.cookie("refreshToken", refreshToken, { httpOnly: true });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      maxAge: 604800,
+    });
 
-    res.status(200).json(result);
+    res.status(200).json({
+      accessToken,
+      success: true,
+      message: "Login successful",
+    });
   } catch (error) {
     next(error);
   }
