@@ -91,14 +91,7 @@ async function get(params) {
   }
 }
 
-async function loginWithEmailOrPhone(fields, user, existingToken) {
-  // check password validity
-  const passwordCorrect = await bcrypt.compare(fields.password, user.password);
-
-  if (!passwordCorrect) {
-    throw new CustomError("Invalid password!", 400);
-  }
-
+async function createTokens(user, existingToken) {
   // create an access token
   const accessToken = jwt.sign(
     { userId: user._id, role: user.role },
@@ -112,9 +105,11 @@ async function loginWithEmailOrPhone(fields, user, existingToken) {
   if (existingToken) {
     // verify signature
     try {
+      // if the existing token is valid return it
       const decoded = jwt.verify(existingToken, JWT_REFRESH_SECRET);
       refreshToken = existingToken;
     } catch (err) {
+      // if token exists and has expired create a new one
       refreshToken = jwt.sign(
         { userId: user._id, role: user.role },
         JWT_REFRESH_SECRET,
@@ -125,7 +120,7 @@ async function loginWithEmailOrPhone(fields, user, existingToken) {
       );
     }
   } else {
-    // create one if it does not exist
+    // if it does not exist,  create one
     refreshToken = jwt.sign(
       { userId: user._id, role: user.role },
       JWT_REFRESH_SECRET,
@@ -135,18 +130,17 @@ async function loginWithEmailOrPhone(fields, user, existingToken) {
       }
     );
   }
+
   // return a result object
   return {
     accessToken,
     refreshToken,
-    success: true,
-    message: "Login successful.",
   };
 }
 
 // Export the user methods
 module.exports = {
   createAccount,
-  loginWithEmailOrPhone,
+  createTokens,
   get,
 };
