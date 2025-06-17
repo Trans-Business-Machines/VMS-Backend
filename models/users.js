@@ -6,6 +6,11 @@ const jwt = require("jsonwebtoken");
 
 // Import internal modules
 const { CustomError } = require("../utils/");
+const {
+  jwtAccessTokenOpts,
+  jwtRefreshTokenOpts,
+  SALT_ROUNDS,
+} = require("../constants");
 
 // LOAD .env variables
 dotenv.config();
@@ -22,51 +27,18 @@ const Users = mongoose.model("Users", userSchema);
 
 /* ------------------------- User Model Functions  -------------------------*/
 async function createAccount(fields) {
-  // check if the user already exists
-  const existingEmail = await get({ email: fields.email });
-
-  // check if phone already exists
-  const existingPhone = await get({ phone: fields.phone });
-
-  if (existingEmail) {
-    // Throw error if email already exists.
-    throw new CustomError("Email already in use!", 400);
-  }
-
-  if (existingPhone) {
-    // Throw error if phone number already exists.
-    throw new CustomError("Phone number is already in use!", 400);
-  }
-
-  // Hash the password
-  fields.password = await bcrypt.hash(fields.password, 10);
-
   try {
-    // Insert user to DB
-    const newUser = await Users.create(fields);
+    //Try to insert user to DB
+    // Create an in memory user object first
+    const newUser = new Users(fields);
 
-    // create access and refresh tokens
-    const accessToken = jwt.sign(
-      { userId: newUser._id, role: newUser.role },
-      JWT_TOKEN_SECRET,
-      {
-        algorithm: "HS256",
-        expiresIn: "1h",
-      }
-    );
+    // Hash the password of the new in memory user
+    newUser.password = await bcrypt.hash(newUser.password, SALT_ROUNDS);
 
-    const refreshToken = jwt.sign(
-      { userId: newUser._id, role: newUser.role },
-      JWT_REFRESH_SECRET,
-      {
-        algorithm: "HS256",
-        expiresIn: "7d",
-      }
-    );
+    // Write the in memory user to the database
+    await newUser.save();
 
     return {
-      accessToken,
-      refreshToken,
       user: {
         userId: newUser._id,
         firstname: newUser.firstname,
@@ -77,17 +49,7 @@ async function createAccount(fields) {
       },
     };
   } catch (error) {
-    console.error(error);
     throw error;
-  }
-}
-
-async function get(params) {
-  try {
-    const user = Users.findOne(params);
-    return user;
-  } catch (error) {
-    throw new CustomError("User not found!", 404);
   }
 }
 
@@ -96,7 +58,7 @@ async function createTokens(user, existingToken) {
   const accessToken = jwt.sign(
     { userId: user._id, role: user.role },
     JWT_TOKEN_SECRET,
-    { algorithm: "HS256", expiresIn: "1h" }
+    jwtAccessTokenOpts
   );
 
   // check if a valid refresh token existings if not create another
@@ -113,10 +75,7 @@ async function createTokens(user, existingToken) {
       refreshToken = jwt.sign(
         { userId: user._id, role: user.role },
         JWT_REFRESH_SECRET,
-        {
-          algorithm: "HS256",
-          expiresIn: "7d",
-        }
+        jwtRefreshTokenOpts
       );
     }
   } else {
@@ -124,10 +83,7 @@ async function createTokens(user, existingToken) {
     refreshToken = jwt.sign(
       { userId: user._id, role: user.role },
       JWT_REFRESH_SECRET,
-      {
-        algorithm: "HS256",
-        expiresIn: "7d",
-      }
+      jwtRefreshTokenOpts
     );
   }
 
@@ -136,6 +92,15 @@ async function createTokens(user, existingToken) {
     accessToken,
     refreshToken,
   };
+}
+
+async function get(params) {
+  try {
+    const user = Users.findOne(params);
+    return user;
+  } catch (error) {
+    throw new CustomError("User not found!", 404);
+  }
 }
 
 // Export the user methods
