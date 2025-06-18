@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 // Internal modules
 const authRoutes = require("./routes/auth");
 const visitRoutes = require("./routes/visits");
+const userRoutes = require("./routes/users");
 const middleware = require("./middleware/index");
 
 // Load the environment variables
@@ -25,6 +26,7 @@ app.use(cookieParser()); // parse cookies
 // App routes
 app.use("/api/auth", authRoutes);
 app.use("/api/visit", visitRoutes);
+app.use("/api/users", userRoutes);
 
 // Error handling middleware and NotFound middleware
 app.use(middleware.handleError);
