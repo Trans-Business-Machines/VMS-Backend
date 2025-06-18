@@ -15,14 +15,14 @@ const {
 // LOAD .env variables
 dotenv.config();
 
-// Get the JWT secret from environment variables
+// Get the JWT secrets from environment variables
 const JWT_TOKEN_SECRET = process.env.JWT_TOKEN_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 // Import the user schema from schemas directory
 const { userSchema } = require("../schemas");
 
-// create the users model
+// Create the users model
 const Users = mongoose.model("Users", userSchema);
 
 /* ------------------------- User Model Functions  -------------------------*/
@@ -94,18 +94,81 @@ async function createTokens(user, existingToken) {
   };
 }
 
-async function get(params) {
+async function get(filter) {
   try {
-    const user = Users.findOne(params);
+    const user = await Users.findOne(filter).lean().select("-__v");
+
+    if (!user) {
+      throw new CustomError("User not found!", 404);
+    }
+
     return user;
   } catch (error) {
-    throw new CustomError("User not found!", 404);
+    throw new CustomError(error ? error.message : "User not found!", 404);
   }
 }
 
-// Export the user methods
+async function list(opts = {}) {
+  const { limit, offset } = opts;
+
+  const totalUsers = await Users.countDocuments();
+  const totalPages = Math.ceil(totalUsers / limit);
+
+  try {
+    const filter = { role: { $ne: "admin" } };
+    const users = await Users.find(filter, "-password", { lean: true })
+      .sort({ createdAt: -1 })
+      .skip(offset)
+      .limit(limit)
+      .select("-__v");
+
+    return {
+      users,
+      totalPages,
+    };
+  } catch (error) {
+    throw new CustomError(error ? error.message : "Failed to fetch users", 500);
+  }
+}
+
+async function update(updates, filter) {
+  try {
+    // Hash the password if it is being updated
+    if (updates.hasOwnProperty("password")) {
+      updates.password = await bcrypt.hash(updates.password, SALT_ROUNDS);
+    }
+
+    const result = await Users.findByIdAndUpdate(filter, updates, {
+      new: true,
+      runValidators: true,
+    })
+      .lean()
+      .select("-__v");
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function remove(filter) {
+  try {
+    const result = await Users.deleteOne(filter);
+    if (result.deletedCount === 0) {
+      throw new CustomError("User not found or already deleted", 404);
+    }
+    return { message: "User deleted successfully" };
+  } catch (error) {
+    throw error;
+  }
+}
+
+/* ------------------------- Export the user methods  -------------------------*/
 module.exports = {
   createAccount,
   createTokens,
   get,
+  list,
+  remove,
+  update,
 };
