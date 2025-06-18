@@ -14,12 +14,13 @@ const JWT_TOKEN_SECRET = process.env.JWT_TOKEN_SECRET;
 function authenticate(req, res, next) {
   // Get the access token from authorization header
   let accessToken = req.headers.authorization;
-  accessToken = accessToken.replace(/^bearer\s*/i, "");
 
   if (!accessToken) {
-    return next(new AuthError("No access token provided.", 401));
+    return next(new AuthError("Access denied, No access token provided!", 400));
   }
 
+  accessToken = accessToken.replace(/^bearer\s*/i, "");
+  
   // Verify token signature
   try {
     // decode the jwt payload
@@ -31,9 +32,9 @@ function authenticate(req, res, next) {
     // Proceed to the next route handler
     next();
   } catch (error) {
-    res.status(400).json({
+    res.status(401).json({
       error: {
-        message: error.message,
+        message: error.message || "Invalid or expired token.",
       },
     });
   }

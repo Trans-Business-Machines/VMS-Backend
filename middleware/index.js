@@ -31,6 +31,12 @@ function handleError(err, req, res, next) {
     }
   }
 
+  //Handle updates to immutable _id file
+  if (err.name === "MongoServerError" && err.code === 66) {
+    statusCode = 400;
+    message = "Cannot update immutable _id field.";
+  }
+
   const errorResponse = {
     statusCode,
     message,
