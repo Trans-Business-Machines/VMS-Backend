@@ -2,6 +2,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
 // Internal modules
@@ -19,7 +20,15 @@ const MONGO_URI = process.env.MONGO_URI;
 // create express app instance
 const app = express();
 
-// Middleware to parse request bodies and cookies
+// Middleware to parse request bodies, cookies, and also allow cors
+app.use(
+  cors({
+    origin: "http://localhost:5181", // allow requests from this origin
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // allow these HTTP methods
+    allowedHeaders: ["Content-Type", "Authorization", "Accept"], // allow these headers
+    credentials: true, // allow cookies to be sent
+  })
+);
 app.use(express.json()); // parse request bodies
 app.use(cookieParser()); // parse cookies
 
