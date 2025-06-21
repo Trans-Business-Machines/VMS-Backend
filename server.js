@@ -23,7 +23,7 @@ const app = express();
 // Middleware to parse request bodies, cookies, and also allow cors
 app.use(
   cors({
-    origin: "http://localhost:5181", // allow requests from this origin
+    origin: "http://localhost:5173", // allow requests from this origin
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // allow these HTTP methods
     allowedHeaders: ["Content-Type", "Authorization", "Accept"], // allow these headers
     credentials: true, // allow cookies to be sent
