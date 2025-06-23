@@ -13,28 +13,33 @@ async function checkIn(visitorData) {
   try {
     let result = await Visit.create(visitorData);
 
-    result = await getVisit({ _id: result._id });
+    if (!result) {
+      throw new CustomError("Check in failed!", 500);
+    }
 
-    return result;
+    return {
+      success: true,
+      message: "Check in was successful",
+    };
   } catch (error) {
     throw error;
   }
 }
 
-async function getVisit(filter) {
+async function remove(visitId) {
   try {
-    const visit = await Visit.findOne(filter, "-__v")
-      .populate({ path: "host", select: "firstname lastname" })
-      .populate({ path: "checkin_officer", select: "firstname lastname" })
-      .exec();
+    const result = await Visit.deleteOne({ _id: visitId });
 
-    if (!visit) {
-      throw new CustomError("Not found!", 404);
+    if (result.deletedCount === 0) {
+      throw new CustomError("Visit not found or is already deleted!", 404);
     }
 
-    return visit;
-  } catch (err) {
-    throw err;
+    return {
+      success: true,
+      message: "Visit has been successfully deleted.",
+    };
+  } catch (error) {
+    throw error;
   }
 }
 
@@ -62,4 +67,5 @@ async function signOut(visitId, updates) {
 module.exports = {
   checkIn,
   signOut,
+  remove,
 };

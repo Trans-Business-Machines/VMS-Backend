@@ -4,9 +4,9 @@ const { AuthError, CustomError } = require("../../utils");
 async function createVisit(req, res, next) {
   const user = req.user;
 
-  if (user.role !== "soldier") {
+  if (!["admin", "soldier"].includes(user.role)) {
     throw new AuthError(
-      "Forbidden, only a soldier can create new visits.",
+      "Forbidden, only a soldier or an admin can create new visits.",
       403
     );
   }
@@ -14,13 +14,8 @@ async function createVisit(req, res, next) {
   const visitor = req.body;
 
   try {
-    const visitInfo = await Visit.checkIn(visitor);
-
-    res.status(201).json({
-      success: true,
-      message: "Check in was successful",
-      visit: visitInfo,
-    });
+    const result = await Visit.checkIn(visitor);
+    res.status(201).json(result);
   } catch (error) {
     next(error);
   }
@@ -63,7 +58,25 @@ async function checkOut(req, res, next) {
   }
 }
 
+async function deleteVisit(req, res, next) {
+  const user = req.user;
+
+  if (!["admin"].includes(user.role)) {
+    throw new AuthError("Forbidden, only an admin can delete a visit", 403);
+  }
+
+  const visitId = req.params.visitId;
+
+  try {
+    const result = await Visit.remove(visitId);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createVisit,
   checkOut,
+  deleteVisit,
 };
