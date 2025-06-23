@@ -84,7 +84,7 @@ const VisitPurpose = {
   IT_SUPPORT: "it support",
   TRAINING_WORKSHOP: "training workshop",
   OFFICE_TOUR: "office tour",
-  INSPECTION_AUDIT: "inspection",
+  INSPECTION_AUDIT: "inspection audit",
   EXECUTIVE_VISIT: "executive visit",
   NETWORKING_EVENT: "networking event",
   HR_APPOINTMENT: "hr appointment",

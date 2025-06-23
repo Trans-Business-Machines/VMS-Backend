@@ -34,7 +34,7 @@ app.use(cookieParser()); // parse cookies
 
 // App routes
 app.use("/api/auth", authRoutes);
-app.use("/api/visit", visitRoutes);
+app.use("/api/visits", visitRoutes);
 app.use("/api/users", userRoutes);
 
 // Error handling middleware and NotFound middleware

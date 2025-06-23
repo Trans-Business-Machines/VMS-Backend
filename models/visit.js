@@ -63,9 +63,52 @@ async function signOut(visitId, updates) {
   }
 }
 
+async function list(opts = {}) {
+  let filter = {};
+
+  if (opts.host) {
+    filter.host = opts.host;
+  }
+
+  if (opts.purpose) {
+    filter.purpose = opts.purpose;
+  }
+
+  if (opts.status) {
+    filter.status = opts.status;
+  }
+
+  const totalVisits = await Visit.countDocuments();
+  const totalPages = Math.ceil(totalVisits / opts.limit);
+
+  const hasNext = opts.currentPage < totalPages;
+  const hasPrev = opts.currentPage > 1;
+
+  try {
+    const logs = await Visit.find(filter, "-__v")
+      .sort({ _id: 1 })
+      .skip(opts.offset)
+      .limit(opts.limit)
+      .populate({ path: "host", select: "firstname lastname " })
+      .populate({ path: "checkin_officer", select: "firstname lastname " })
+      .lean();
+
+    return {
+      hasNext,
+      hasPrev,
+      visits: logs,
+      totalPages,
+      currentPage: opts.currentPage,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
 /*------------------------  Export visit model methods ------------------------ */
 module.exports = {
   checkIn,
   signOut,
   remove,
+  list,
 };

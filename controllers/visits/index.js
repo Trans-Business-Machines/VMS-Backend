@@ -75,8 +75,40 @@ async function deleteVisit(req, res, next) {
   }
 }
 
+async function getVisits(req, res, next) {
+  const user = req.user;
+
+  if (!["admin", "soldier"].includes(user.role)) {
+    throw new AuthError(
+      "Forbidden, only an admin or a soldier can view visitor logs",
+      403
+    );
+  }
+
+  const { host = "", purpose = "", status = "", page = 1 } = req.query;
+  const limit = 10;
+
+  const offset = (Number(page) - 1) * limit;
+
+  try {
+    const visits = await Visit.list({
+      host,
+      purpose,
+      status,
+      limit,
+      offset,
+      currentPage: Number(page),
+    });
+
+    res.json(visits);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createVisit,
   checkOut,
   deleteVisit,
+  getVisits,
 };
