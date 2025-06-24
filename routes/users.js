@@ -6,12 +6,14 @@ const router = express.Router();
 const { authenticate } = require("../middleware/auth");
 const {
   getUsers,
+  getRoles,
   getOneUser,
   deleteUser,
   updateUser,
 } = require("../controllers/users");
 
 router.get("/", authenticate, getUsers);
+router.get("/roles", authenticate, getRoles);
 router.get("/:id", authenticate, getOneUser);
 
 router.delete("/:id", authenticate, deleteUser);

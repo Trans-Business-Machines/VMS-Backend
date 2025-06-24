@@ -59,6 +59,29 @@ async function getOneUser(req, res, next) {
   }
 }
 
+async function getRoles(req, res, next) {
+  const allRoles = ["admin", "host", "receptionist", "soldier"];
+  const user = req.user;
+
+  try {
+    if (user.role === "super admin") {
+      return res.json({
+        roles: allRoles,
+      });
+    } else if (user.role === "admin") {
+      const roles = allRoles.filter((role) => role !== "admin");
+
+      return res.json({
+        roles,
+      });
+    }
+
+    throw new AuthError("Unauthorized to get user roles.", 401);
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function deleteUser(req, res, next) {
   const _id = req.params.id;
   const user = req.user;
@@ -157,4 +180,5 @@ module.exports = {
   getOneUser,
   deleteUser,
   updateUser,
+  getRoles,
 };
