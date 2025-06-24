@@ -20,7 +20,7 @@ function authenticate(req, res, next) {
   }
 
   accessToken = accessToken.replace(/^bearer\s*/i, "");
-  
+
   // Verify token signature
   try {
     // decode the jwt payload
@@ -50,7 +50,7 @@ async function getUser(req, res, next) {
     : { phone: fields.phone };
 
   // Get the user object from DB
-  const user = await Users.get(filter);
+  const user = await Users.get(filter, { includePassword: true });
 
   // if no user is found throw not found error
   if (!user) {
