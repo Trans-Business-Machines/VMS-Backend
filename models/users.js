@@ -94,9 +94,10 @@ async function createTokens(user, existingToken) {
   };
 }
 
-async function get(filter) {
+async function get(filter, options = { includePassword: false }) {
   try {
-    const user = await Users.findOne(filter).lean().select("-__v");
+    const projection = options.includePassword ? "-__v" : "-__v -password";
+    const user = await Users.findOne(filter).select(projection);
 
     if (!user) {
       throw new CustomError("User not found!", 404);
@@ -104,18 +105,29 @@ async function get(filter) {
 
     return user;
   } catch (error) {
-    throw new CustomError(error ? error.message : "User not found!", 404);
+    throw error;
   }
 }
 
 async function list(opts = {}) {
-  const { limit, offset } = opts;
+  const { limit, offset, role } = opts;
 
   const totalUsers = await Users.countDocuments();
   const totalPages = Math.ceil(totalUsers / limit);
 
+  let filter = {};
+
+  // if you are a super admin you can view all users except yourself
+
+  if (role === "super admin") {
+    filter.role = { $ne: "super admin" };
+  }
+  //  Otherwise if you are admin you can only view hosts, soldier, and receptionist users only.
+  else if (role === "admin") {
+    filter.role = { $nin: ["super admin", "admin"] };
+  }
+
   try {
-    const filter = { role: { $ne: "admin" } };
     const users = await Users.find(filter, "-password", { lean: true })
       .sort({ createdAt: -1 })
       .skip(offset)
@@ -155,7 +167,7 @@ async function remove(filter) {
   try {
     const result = await Users.deleteOne(filter);
     if (result.deletedCount === 0) {
-      throw new CustomError("User not found or already deleted", 404);
+      throw new CustomError("User not found or already deleted!", 404);
     }
     return { message: "User deleted successfully" };
   } catch (error) {
