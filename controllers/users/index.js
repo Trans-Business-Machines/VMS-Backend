@@ -4,7 +4,7 @@ const { AuthError, CustomError } = require("../../utils");
 async function getUsers(req, res, next) {
   const user = req.user;
 
-  if (!["admin"].includes(user.role)) {
+  if (!["super admin", "admin"].includes(user.role)) {
     return next(new AuthError("Forbidden, only an admin can list users.", 403));
   }
 
@@ -13,7 +13,11 @@ async function getUsers(req, res, next) {
   const offset = (currentPage - 1) * limit;
 
   try {
-    const { totalPages, users } = await Users.list({ limit, offset });
+    const { totalPages, users } = await Users.list({
+      limit,
+      offset,
+      role: user.role,
+    });
 
     const hasNext = currentPage < totalPages;
     const hasPrev = currentPage > 1;
@@ -34,18 +38,24 @@ async function getOneUser(req, res, next) {
   const _id = req.params.id;
   const user = req.user;
 
-  if (user.role === "admin" || user.userId === _id) {
-    try {
-      const { password, ...userData } = await Users.get({ _id });
+  try {
+    const targetUser = await Users.get({ _id });
 
-      res.status(200).json(userData);
-    } catch (error) {
-      return next(error);
+    if (user.role === "super admin" || user.userId === _id) {
+      // return user info
+      res.json(targetUser);
+    } else if (
+      user.role === "admin" &&
+      !["admin", "super admin"].includes(targetUser.role)
+    ) {
+      // return user info
+      res.json(targetUser);
+    } else {
+      // throw an error
+      throw new AuthError("Access denied !", 403);
     }
-  } else {
-    return next(
-      new AuthError("Unauthorized, you can only access your own records.", 401)
-    );
+  } catch (error) {
+    next(error);
   }
 }
 
@@ -53,16 +63,29 @@ async function deleteUser(req, res, next) {
   const _id = req.params.id;
   const user = req.user;
 
-  if (user.role !== "admin") {
+  // Ensure only admins or super admin can delete users
+  if (!["super admin", "admin"].includes(user.role)) {
     return next(
       new AuthError("Forbidden, only an admin can delete users.", 403)
     );
   }
 
-  if (user.role === "admin" && _id === user.userId) {
-    return next(new CustomError("You cannot delete the admin user.", 403));
+  const targetUser = await Users.get({ _id });
+
+  // Forbid an admin from deleting a super admin or another admin
+  if (
+    user.role === "admin" &&
+    ["super admin", "admin"].includes(targetUser.role)
+  ) {
+    return next(
+      new AuthError(
+        "Forbidden, an admin can't delete a super admin or a fellow admin",
+        403
+      )
+    );
   }
 
+  // Delete the user
   try {
     const result = await Users.remove({ _id });
     res.status(200).json(result);
@@ -76,12 +99,27 @@ async function updateUser(req, res, next) {
   const user = req.user;
   const updates = req.body;
 
-  if (user.role === "admin" || user.userId === _id) {
+  // check if the user is a super admin, admin the the user himself.
+  if (["super admin", "admin"].includes(user.role) || user.userId === _id) {
     try {
-      // Check if the user is trying to update their own role
-      if (updates.hasOwnProperty("role") && user.role !== "admin") {
+      // Forbid a user from trying to update their own role
+      if (
+        updates.hasOwnProperty("role") &&
+        !["super admin", "admin"].includes(user.role)
+      ) {
         throw new AuthError(
           "Forbidden, only an admin can change user roles.",
+          403
+        );
+      }
+
+      // Forbid an admin from trying to update role either super admin or admin
+      if (
+        user.role === "admin" &&
+        ["super admin", "admin"].includes(updates.role)
+      ) {
+        throw new AuthError(
+          "Forbidden, only a super admin can update a user role to either admin or super admin!",
           403
         );
       }
@@ -95,6 +133,7 @@ async function updateUser(req, res, next) {
       // Exclude password from the response
       const { password, ...userData } = updatedUser;
 
+      // Return back a response to client
       res.status(200).json({
         success: true,
         message: "User updated successfully",

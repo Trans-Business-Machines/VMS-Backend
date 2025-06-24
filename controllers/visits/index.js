@@ -4,7 +4,7 @@ const { AuthError, CustomError } = require("../../utils");
 async function createVisit(req, res, next) {
   const user = req.user;
 
-  if (!["admin", "soldier"].includes(user.role)) {
+  if (!["super admin", "admin", "soldier"].includes(user.role)) {
     throw new AuthError(
       "Forbidden, only a soldier or an admin can create new visits.",
       403
@@ -24,7 +24,7 @@ async function createVisit(req, res, next) {
 async function checkOut(req, res, next) {
   const user = req.user;
 
-  if (!["admin", "soldier"].includes(user.role)) {
+  if (!["super admin", "admin", "soldier"].includes(user.role)) {
     throw new AuthError(
       "Forbidden, only an admin or a soldier can check a visitor out",
       403
@@ -61,7 +61,7 @@ async function checkOut(req, res, next) {
 async function deleteVisit(req, res, next) {
   const user = req.user;
 
-  if (!["admin"].includes(user.role)) {
+  if (!["super admin", "admin"].includes(user.role)) {
     throw new AuthError("Forbidden, only an admin can delete a visit", 403);
   }
 
@@ -78,7 +78,7 @@ async function deleteVisit(req, res, next) {
 async function getVisits(req, res, next) {
   const user = req.user;
 
-  if (!["admin", "soldier"].includes(user.role)) {
+  if (!["super admin", "admin", "soldier"].includes(user.role)) {
     throw new AuthError(
       "Forbidden, only an admin or a soldier can view visitor logs",
       403

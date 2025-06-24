@@ -21,7 +21,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 async function register(req, res, next) {
   const user = req.user;
 
-  if (user.role !== "admin") {
+  if (!["super admin", "admin"].includes(user.role)) {
     return next(
       new CustomError("Forbidden, only admin can create users.", 403)
     );
@@ -35,12 +35,12 @@ async function register(req, res, next) {
     let emailSent = false;
 
     //try to send email to the  client
-    try {
+    /* try {
       await sendEmail(user, password);
       emailSent = true;
     } catch (error) {
       next(error);
-    }
+    } */
 
     // send the response back to the client
     return res.status(201).json({
