@@ -20,10 +20,11 @@ const JWT_TOKEN_SECRET = process.env.JWT_TOKEN_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 // Import the user schema from schemas directory
-const { userSchema } = require("../schemas");
+const { userSchema, scheduleSchema } = require("../schemas");
 
 // Create the users model
 const Users = mongoose.model("Users", userSchema);
+const Schedule = mongoose.model("Schedules", scheduleSchema);
 
 /* ------------------------- User Model Functions  -------------------------*/
 async function createAccount(fields) {
@@ -175,6 +176,15 @@ async function remove(filter) {
   }
 }
 
+async function createSchedule(fields) {
+  try {
+    const result = await Schedule.create(fields);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
 /* ------------------------- Export the user methods  -------------------------*/
 module.exports = {
   createAccount,
@@ -183,4 +193,5 @@ module.exports = {
   list,
   remove,
   update,
+  createSchedule,
 };

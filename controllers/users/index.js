@@ -82,6 +82,48 @@ async function getRoles(req, res, next) {
   }
 }
 
+async function setAvailability(req, res, next) {
+  const user = req.user;
+  const _id = req.params.id;
+
+  if (!["host", "receptionist"].includes(user.role)) {
+    return next(
+      new AuthError(
+        "Forbidden, only a host or receptionist can create their schedule!",
+        403
+      )
+    );
+  }
+
+  if (user.userId !== _id) {
+    return next(
+      new CustomError(
+        "Only the user themselves can create their own schedule",
+        403
+      )
+    );
+  }
+
+  const fields = req.body;
+
+  fields.start_date = new Date(fields.start_date).getTime();
+  fields.end_date = new Date(fields.end_date).getTime();
+
+  console.log(fields);
+
+  try {
+    const result = await Users.createSchedule(fields);
+
+    res.status(201).json({
+      success: true,
+      message: "Schedule created",
+      result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function deleteUser(req, res, next) {
   const _id = req.params.id;
   const user = req.user;
@@ -181,4 +223,5 @@ module.exports = {
   deleteUser,
   updateUser,
   getRoles,
+  setAvailability,
 };
