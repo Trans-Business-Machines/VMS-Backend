@@ -139,7 +139,26 @@ const visitSchema = new mongoose.Schema({
   },
 });
 
+const scheduleSchema = new mongoose.Schema({
+  _id: { type: String, default: createId },
+  host: {
+    type: String,
+    ref: "Users",
+    required: true,
+    index: true,
+  },
+  start_date: {
+    type: Date,
+    required: true,
+  },
+  end_date: {
+    type: Date,
+    required: true,
+  },
+});
+
 module.exports = {
   userSchema,
   visitSchema,
+  scheduleSchema,
 };
