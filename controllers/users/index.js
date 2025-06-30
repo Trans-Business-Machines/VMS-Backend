@@ -217,6 +217,25 @@ async function updateUser(req, res, next) {
   }
 }
 
+async function getHosts(req, res, next) {
+  const user = req.user;
+
+  if (!["super admin", "admin", "soldier"].includes(user.role)) {
+    return next(
+      new AuthError("Forbidden, only admins and soldiers can get hosts", 403)
+    );
+  }
+
+  try {
+    const hosts = await Users.retrieveHosts();
+    res.json({
+      hosts,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getUsers,
   getOneUser,
@@ -224,4 +243,5 @@ module.exports = {
   updateUser,
   getRoles,
   setAvailability,
+  getHosts,
 };

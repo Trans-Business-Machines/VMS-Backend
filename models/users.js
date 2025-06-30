@@ -185,6 +185,19 @@ async function createSchedule(fields) {
   }
 }
 
+async function retrieveHosts() {
+  try {
+    const hosts = Users.find(
+      { role: { $in: ["host", "receptionist"] } },
+      { _id: 1, firstname: 1, lastname: 1 }
+    ).lean();
+
+    return hosts;
+  } catch (error) {
+    throw error;
+  }
+}
+
 /* ------------------------- Export the user methods  -------------------------*/
 module.exports = {
   createAccount,
@@ -194,4 +207,5 @@ module.exports = {
   remove,
   update,
   createSchedule,
+  retrieveHosts,
 };
