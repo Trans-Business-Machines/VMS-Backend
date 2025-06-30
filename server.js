@@ -6,6 +6,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
 // Internal modules
+const indexRoutes = require("./routes/index");
 const authRoutes = require("./routes/auth");
 const visitRoutes = require("./routes/visits");
 const userRoutes = require("./routes/users");
@@ -33,6 +34,7 @@ app.use(express.json()); // parse request bodies
 app.use(cookieParser()); // parse cookies
 
 // App routes
+app.use("/api", indexRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/visits", visitRoutes);
 app.use("/api/users", userRoutes);

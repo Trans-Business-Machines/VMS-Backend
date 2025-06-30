@@ -1,5 +1,5 @@
 const Visit = require("../../models/visit");
-const { AuthError, CustomError } = require("../../utils");
+const { AuthError, CustomError, visitPurposes } = require("../../utils");
 
 async function createVisit(req, res, next) {
   const user = req.user;
@@ -86,7 +86,7 @@ async function getVisits(req, res, next) {
   }
 
   const { host = "", purpose = "", status = "", page = 1 } = req.query;
-  const limit = 10;
+  const limit = 2;
 
   const offset = (Number(page) - 1) * limit;
 
@@ -106,9 +106,69 @@ async function getVisits(req, res, next) {
   }
 }
 
+async function getTodaysVisits(req, res, next) {
+  const user = req.user;
+  const page = Number(req.query.page) || 1
+
+  if (!["super admin", "admin", "soldier"].includes(user.role)) {
+    return next(
+      AuthError("Forbidden, only admins and soldiers can get today visits", 403)
+    );
+  }
+
+  try {
+    const result = await Visit.getTodaysVisitorStats(page);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function getStats(req, res, next) {
+  const user = req.user;
+
+  if (!["super admin", "admin", "soldier"].includes(user.role)) {
+    return next(
+      new AuthError(
+        "Forbidden, only admins and soldiers can get visit stats",
+        403
+      )
+    );
+  }
+
+  try {
+    const stats = await Visit.getStatistics();
+    res.json({
+      stats,
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function getPurposes(req, res, next) {
+  const user = req.user;
+
+  if (!["super admin", "admin", "soldier"].includes(user.role)) {
+    return next(
+      new AuthError(
+        "Forbidden, only an admin and a soldier can get purposes",
+        403
+      )
+    );
+  }
+
+  res.json({
+    purposes: visitPurposes,
+  });
+}
+
 module.exports = {
   createVisit,
   checkOut,
   deleteVisit,
   getVisits,
+  getPurposes,
+  getStats,
+  getTodaysVisits,
 };

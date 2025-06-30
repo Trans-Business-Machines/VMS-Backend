@@ -105,10 +105,90 @@ async function list(opts = {}) {
   }
 }
 
+async function getStatistics() {
+  try {
+    const start_day = new Date();
+    start_day.setHours(0, 0, 0, 0);
+
+    const end_day = new Date();
+    end_day.setHours(23, 59, 59, 999);
+
+    const visitCount = await Visit.countDocuments({
+      visit_date: { $gte: start_day, $lte: end_day },
+    });
+
+    const activeVisitors = await Visit.countDocuments({
+      status: "checked-in",
+      time_in: { $gte: start_day, $lte: end_day },
+    });
+
+    const checkedOutVisitors = await Visit.countDocuments({
+      status: "checked-out",
+      time_in: { $gte: start_day, $lte: end_day },
+    });
+
+    return {
+      visitCount,
+      activeVisitors,
+      checkedOutVisitors,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getTodaysVisitorStats(page) {
+  const limit = 10;
+  const offset = Math.max((page - 1) * limit, 0);
+
+  const start_day = new Date();
+  start_day.setHours(0, 0, 0, 0);
+
+  const end_day = new Date();
+  end_day.setHours(23, 59, 59, 999);
+
+  try {
+    const todaysCount = await Visit.countDocuments({
+      visit_date: { $gte: start_day, $lte: end_day },
+    });
+
+    const visits = await Visit.find({
+      visit_date: { $gte: start_day, $lte: end_day },
+    })
+      .sort({ _id: 1 })
+      .skip(offset)
+      .limit(10)
+      .populate({
+        path: "host",
+        select: "firstname lastname",
+      })
+      .populate({
+        path: "checkin_officer",
+        select: "firstname lastname",
+      })
+      .select("firstname lastname national_id time_in time_out status")
+      .lean();
+
+    const hasNext = page < todaysCount;
+    const hasPrev = page > 1;
+
+    return {
+      hasNext,
+      hasPrev,
+      visits,
+      currentPage: page,
+    };
+  } catch (error) {
+    throw error;
+  }
+}
+
 /*------------------------  Export visit model methods ------------------------ */
 module.exports = {
   checkIn,
   signOut,
   remove,
   list,
+  getStatistics,
+  getTodaysVisitorStats,
 };
