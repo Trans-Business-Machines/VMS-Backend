@@ -2,14 +2,14 @@ const jwtAccessTokenOpts = { algorithm: "HS256", expiresIn: "1h" };
 
 const jwtRefreshTokenOpts = {
   algorithm: "HS256",
-  expiresIn: "7d",
+  expiresIn: "1d",
 };
 
 // TODO: include secure and sameSite options during production
 // For now, we are setting httpOnly to true to prevent client-side access`
 const refreshTokenCookieOpts = {
   httpOnly: true,
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  maxAge: 24 * 60 * 60 * 1000, // 1day
 };
 
 const SALT_ROUNDS = 10;
