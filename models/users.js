@@ -146,17 +146,12 @@ async function list(opts = {}) {
 
 async function update(updates, filter) {
   try {
-    // Hash the password if it is being updated
-    if (updates.hasOwnProperty("password")) {
-      updates.password = await bcrypt.hash(updates.password, SALT_ROUNDS);
-    }
-
     const result = await Users.findByIdAndUpdate(filter, updates, {
       new: true,
       runValidators: true,
     })
-      .lean()
-      .select("-__v");
+      .select("-__v -password")
+      .lean();
 
     return result;
   } catch (error) {

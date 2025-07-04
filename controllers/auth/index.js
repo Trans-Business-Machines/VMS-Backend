@@ -94,7 +94,7 @@ function refreshTokens(req, res, next) {
     const decoded = jwt.verify(token, JWT_REFRESH_SECRET);
 
     const accessToken = jwt.sign(
-      { userId: decoded._id, role: decoded.role },
+      { userId: decoded.userId, role: decoded.role },
       JWT_TOKEN_SECRET,
       jwtAccessTokenOpts
     );

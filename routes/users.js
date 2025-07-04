@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 // Internal module methods
-const { authenticate } = require("../middleware/auth");
+const { authenticate, checkPasswordValidity } = require("../middleware/auth");
 const {
   getUsers,
   getRoles,
@@ -20,6 +20,6 @@ router.get("/:id", authenticate, getOneUser);
 router.post("/schedule/:id", authenticate, setAvailability);
 
 router.delete("/:id", authenticate, deleteUser);
-router.patch("/:id", authenticate, updateUser);
+router.patch("/:id", authenticate, checkPasswordValidity, updateUser);
 
 module.exports = router;

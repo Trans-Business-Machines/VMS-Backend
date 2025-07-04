@@ -162,7 +162,7 @@ async function deleteUser(req, res, next) {
 async function updateUser(req, res, next) {
   const _id = req.params.id;
   const user = req.user;
-  const updates = req.body;
+  const updates = req.updates;
 
   // check if the user is a super admin, admin the the user himself.
   if (["super admin", "admin"].includes(user.role) || user.userId === _id) {
@@ -188,21 +188,17 @@ async function updateUser(req, res, next) {
           403
         );
       }
-
       const updatedUser = await Users.update(updates, { _id });
 
       if (!updatedUser) {
         throw new CustomError("User not found or update failed.", 404);
       }
 
-      // Exclude password from the response
-      const { password, ...userData } = updatedUser;
-
       // Return back a response to client
       res.status(200).json({
         success: true,
         message: "User updated successfully",
-        user: userData,
+        user: updatedUser,
       });
     } catch (error) {
       next(error);
