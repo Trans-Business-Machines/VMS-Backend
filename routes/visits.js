@@ -1,5 +1,5 @@
-const express = require("express");
-const router = express.Router();
+const express = require("express")
+const router = express.Router()
 
 // Import internal modules
 const { authenticate } = require("../middleware/auth");

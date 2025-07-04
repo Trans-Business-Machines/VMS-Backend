@@ -47,11 +47,10 @@ async function checkOut(req, res, next) {
   }
 
   try {
-    const result = await Visit.signOut(visitId, updates);
+    await Visit.signOut(visitId, updates);
     res.status(200).json({
       success: true,
       message: "Check out was successful",
-      result,
     });
   } catch (error) {
     next(error);
@@ -85,18 +84,19 @@ async function getVisits(req, res, next) {
     );
   }
 
-  const { host = "", purpose = "", status = "", page = 1 } = req.query;
-  const limit = 2;
+  const { host = "", purpose = "", date = "", page = 1 } = req.query;
+  const limit = 4;
 
   const offset = (Number(page) - 1) * limit;
+  const visit_day = date;
 
   try {
     const visits = await Visit.list({
       host,
       purpose,
-      status,
       limit,
       offset,
+      visit_day,
       currentPage: Number(page),
     });
 
@@ -108,7 +108,7 @@ async function getVisits(req, res, next) {
 
 async function getTodaysVisits(req, res, next) {
   const user = req.user;
-  const page = Number(req.query.page) || 1
+  const page = Number(req.query.page) || 1;
 
   if (!["super admin", "admin", "soldier"].includes(user.role)) {
     return next(
@@ -138,9 +138,7 @@ async function getStats(req, res, next) {
 
   try {
     const stats = await Visit.getStatistics();
-    res.json({
-      stats,
-    });
+    res.json(stats);
   } catch (err) {
     next(err);
   }

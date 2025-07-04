@@ -1,5 +1,6 @@
 // Import external modules
 const mongoose = require("mongoose");
+const { endOfDay, startOfDay } = require("date-fns");
 
 // Import internal modules
 const { visitSchema } = require("../schemas");
@@ -74,8 +75,12 @@ async function list(opts = {}) {
     filter.purpose = opts.purpose;
   }
 
-  if (opts.status) {
-    filter.status = opts.status;
+  if (opts.visit_day) {
+    const day = new Date(opts.visit_day);
+    filter.visit_date = {
+      $gte: startOfDay(day),
+      $lte: endOfDay(day),
+    };
   }
 
   const totalVisits = await Visit.countDocuments();
@@ -107,24 +112,21 @@ async function list(opts = {}) {
 
 async function getStatistics() {
   try {
-    const start_day = new Date();
-    start_day.setHours(0, 0, 0, 0);
-
-    const end_day = new Date();
-    end_day.setHours(23, 59, 59, 999);
+    const today = new Date();
+    const filter = { $gte: startOfDay(today), $lte: endOfDay(today) };
 
     const visitCount = await Visit.countDocuments({
-      visit_date: { $gte: start_day, $lte: end_day },
+      visit_date: filter,
     });
 
     const activeVisitors = await Visit.countDocuments({
       status: "checked-in",
-      time_in: { $gte: start_day, $lte: end_day },
+      time_in: filter,
     });
 
     const checkedOutVisitors = await Visit.countDocuments({
       status: "checked-out",
-      time_in: { $gte: start_day, $lte: end_day },
+      time_in: filter,
     });
 
     return {
@@ -140,22 +142,20 @@ async function getStatistics() {
 async function getTodaysVisitorStats(page) {
   const limit = 10;
   const offset = Math.max((page - 1) * limit, 0);
-
-  const start_day = new Date();
-  start_day.setHours(0, 0, 0, 0);
-
-  const end_day = new Date();
-  end_day.setHours(23, 59, 59, 999);
+  const today = new Date();
+  const filter = { $gte: startOfDay(today), $lte: endOfDay(today) };
 
   try {
     const todaysCount = await Visit.countDocuments({
-      visit_date: { $gte: start_day, $lte: end_day },
+      visit_date: filter,
     });
 
+    const totalPages = Math.ceil(todaysCount / limit);
+
     const visits = await Visit.find({
-      visit_date: { $gte: start_day, $lte: end_day },
+      visit_date: filter,
     })
-      .sort({ _id: 1 })
+      .sort({ time_in: -1 })
       .skip(offset)
       .limit(10)
       .populate({
@@ -169,7 +169,7 @@ async function getTodaysVisitorStats(page) {
       .select("firstname lastname national_id time_in time_out status")
       .lean();
 
-    const hasNext = page < todaysCount;
+    const hasNext = page < totalPages;
     const hasPrev = page > 1;
 
     return {
