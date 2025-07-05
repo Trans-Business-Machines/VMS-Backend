@@ -87,7 +87,7 @@ async function list(opts = {}) {
 
   try {
     const logs = await Visit.find(filter, "-__v")
-      .sort({ _id: 1 })
+      .sort({ time_in: -1 })
       .skip(opts.offset)
       .limit(opts.limit)
       .populate({ path: "host", select: "firstname lastname " })
