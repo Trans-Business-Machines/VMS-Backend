@@ -4,11 +4,12 @@ const dotenv = require("dotenv");
 
 // Import the internal modules
 const Users = require("../../models/users");
-const { CustomError, sendEmail } = require("../../utils");
+const { CustomError } = require("../../utils");
 const {
   jwtAccessTokenOpts,
   refreshTokenCookieOpts,
 } = require("../../constants");
+const { sendEmail } = require("../../utils/mailService");
 
 // Load .env variables
 dotenv.config();
