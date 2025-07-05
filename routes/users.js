@@ -11,13 +11,15 @@ const {
   deleteUser,
   updateUser,
   setAvailability,
+  updateAvailability,
 } = require("../controllers/users");
 
 router.get("/", authenticate, getUsers);
 router.get("/roles", authenticate, getRoles);
 router.get("/:id", authenticate, getOneUser);
 
-router.post("/schedule/:id", authenticate, setAvailability);
+router.post("/schedule/:hostId", authenticate, setAvailability);
+router.patch("/schedule/:hostId", authenticate, updateAvailability);
 
 router.delete("/:id", authenticate, deleteUser);
 router.patch("/:id", authenticate, checkPasswordValidity, updateUser);
