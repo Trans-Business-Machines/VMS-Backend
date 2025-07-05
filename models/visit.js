@@ -50,13 +50,9 @@ async function signOut(visitId, updates) {
       { _id: visitId },
       { time_out: Date.now(), ...updates },
       {
-        new: true,
         runValidators: true,
       }
-    )
-      .select("_id status  visit_date time_in time_out")
-      .select("-__v")
-      .lean();
+    );
 
     return result;
   } catch (error) {

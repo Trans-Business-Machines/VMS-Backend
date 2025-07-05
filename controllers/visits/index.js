@@ -1,5 +1,7 @@
 const Visit = require("../../models/visit");
+const { getHostAvailabilty } = require("../../models/users");
 const { AuthError, CustomError, visitPurposes } = require("../../utils");
+const { isHostAvailable } = require("../../utils/services");
 
 async function createVisit(req, res, next) {
   const user = req.user;
@@ -14,10 +16,22 @@ async function createVisit(req, res, next) {
   const visitor = req.body;
 
   try {
-    const result = await Visit.checkIn(visitor);
-    res.status(201).json(result);
+    const hostAvailable = await isHostAvailable(
+      visitor,
+      new Date(),
+      getHostAvailabilty
+    );
+
+    if (hostAvailable) {
+      try {
+        const result = await Visit.checkIn(visitor);
+        res.status(201).json(result);
+      } catch (error) {
+        next(error);
+      }
+    }
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
 
@@ -47,7 +61,12 @@ async function checkOut(req, res, next) {
   }
 
   try {
-    await Visit.signOut(visitId, updates);
+    const result = await Visit.signOut(visitId, updates);
+
+    if (!result) {
+      throw new CustomError("Visit not found or is already deleted", 404);
+    }
+
     res.status(200).json({
       success: true,
       message: "Check out was successful",
@@ -85,7 +104,7 @@ async function getVisits(req, res, next) {
   }
 
   const { host = "", purpose = "", date = "", page = 1 } = req.query;
-  const limit = 4;
+  const limit = 10;
 
   const offset = (Number(page) - 1) * limit;
   const visit_day = date;
