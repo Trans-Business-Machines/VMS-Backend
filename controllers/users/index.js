@@ -84,7 +84,7 @@ async function getRoles(req, res, next) {
 
 async function setAvailability(req, res, next) {
   const user = req.user;
-  const _id = req.params.id;
+  const hostId = req.params.hostId;
 
   if (!["host", "receptionist"].includes(user.role)) {
     return next(
@@ -95,7 +95,7 @@ async function setAvailability(req, res, next) {
     );
   }
 
-  if (user.userId !== _id) {
+  if (user.userId !== hostId) {
     return next(
       new CustomError(
         "Only the user themselves can create their own schedule",
@@ -108,8 +108,7 @@ async function setAvailability(req, res, next) {
 
   fields.start_date = new Date(fields.start_date).getTime();
   fields.end_date = new Date(fields.end_date).getTime();
-
-  console.log(fields);
+  fields.host = hostId;
 
   try {
     const result = await Users.createSchedule(fields);
@@ -117,7 +116,53 @@ async function setAvailability(req, res, next) {
     res.status(201).json({
       success: true,
       message: "Schedule created",
-      result,
+      schedule: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function updateAvailability(req, res, next) {
+  const user = req.user;
+  const hostId = req.params.hostId;
+
+  if (!["host", "receptionist"].includes(user.role)) {
+    return next(
+      new AuthError(
+        "Forbidden, only a host or receptionist can update their availability!",
+        403
+      )
+    );
+  }
+
+  if (hostId !== user.userId) {
+    return next(
+      new AuthError(
+        "You can't update another person's availability schedule!",
+        403
+      )
+    );
+  }
+
+  const updates = req.body;
+
+  if (updates.hasOwnProperty("host")) {
+    return next(
+      new CustomError("You can only update start date and end date!", 400)
+    );
+  }
+
+  try {
+    const result = await Users.updateSchedule(updates, { host: hostId });
+
+    if (!result) {
+      throw new CustomError("Schedule not found or is already deleted!", 404);
+    }
+    res.json({
+      success: true,
+      message: "Scudule updated successfully",
+      schedule: result,
     });
   } catch (error) {
     next(error);
@@ -198,7 +243,6 @@ async function updateUser(req, res, next) {
       res.status(200).json({
         success: true,
         message: "User updated successfully",
-        user: updatedUser,
       });
     } catch (error) {
       next(error);
@@ -240,4 +284,5 @@ module.exports = {
   getRoles,
   setAvailability,
   getHosts,
+  updateAvailability,
 };
