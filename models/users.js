@@ -147,7 +147,6 @@ async function list(opts = {}) {
 async function update(updates, filter) {
   try {
     const result = await Users.findByIdAndUpdate(filter, updates, {
-      new: true,
       runValidators: true,
     })
       .select("-__v -password")
@@ -180,11 +179,34 @@ async function createSchedule(fields) {
   }
 }
 
+async function updateSchedule(updates, filter) {
+  try {
+    const result = await Schedule.findOneAndUpdate(filter, updates, {
+      runValidators: true,
+    });
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getHostAvailabilty(hostId) {
+  try {
+    const schedule = await Schedule.findOne({ host: hostId })
+      .select("-__v")
+      .lean();
+
+    return schedule;
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function retrieveHosts() {
   try {
     const hosts = Users.find(
       { role: { $in: ["host", "receptionist"] } },
-      { _id: 1, firstname: 1, lastname: 1 }
+      { _id: 1, firstname: 1, lastname: 1, role: 1 }
     ).lean();
 
     return hosts;
@@ -203,4 +225,6 @@ module.exports = {
   update,
   createSchedule,
   retrieveHosts,
+  updateSchedule,
+  getHostAvailabilty,
 };
