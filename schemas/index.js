@@ -5,6 +5,7 @@ const { isAlpha, isEmail, isNumeric } = require("validator");
 // Import internal modules
 const { VisitPurpose, visitPurposes } = require("../utils");
 
+/* ----------------- user schema ----------------- */
 const userSchema = new mongoose.Schema(
   {
     _id: { type: String, default: createId },
@@ -139,6 +140,7 @@ const visitSchema = new mongoose.Schema({
   },
 });
 
+/* ----------------- schedule schema ----------------- */
 const scheduleSchema = new mongoose.Schema({
   _id: { type: String, default: createId },
   host: {
@@ -157,8 +159,63 @@ const scheduleSchema = new mongoose.Schema({
   },
 });
 
+/* ----------------- notification schema ----------------- */
+const notificationSchema = new mongoose.Schema({
+  _id: { type: String, default: createId },
+  recepient: {
+    type: String,
+    ref: "Users",
+    required: true,
+    index: true,
+  },
+  title: {
+    type: String,
+    required: true,
+    minLength: 5,
+    maxLength: 30,
+  },
+  message: {
+    type: String,
+    required: true,
+    minLength: 10,
+    maxLength: 100,
+  },
+  isRead: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+  createdAt: { type: Date, default: Date.now },
+});
+
+/* ----------------- notification schema ----------------- */
+const subscriptionSchema = new mongoose.Schema({
+  _id: { type: String, default: createId },
+  user: {
+    type: String,
+    index: true,
+    ref: "Users",
+    required: true,
+  },
+  endpoint: {
+    type: String,
+    required: true,
+  },
+  keys: {
+    p256dh: String,
+    auth: String,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+/* ----------------- Exports  ----------------- */
 module.exports = {
   userSchema,
   visitSchema,
   scheduleSchema,
+  notificationSchema,
+  subscriptionSchema,
 };
