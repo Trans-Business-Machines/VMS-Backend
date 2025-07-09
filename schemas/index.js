@@ -162,7 +162,7 @@ const scheduleSchema = new mongoose.Schema({
 /* ----------------- notification schema ----------------- */
 const notificationSchema = new mongoose.Schema({
   _id: { type: String, default: createId },
-  recepient: {
+  recipient: {
     type: String,
     ref: "Users",
     required: true,

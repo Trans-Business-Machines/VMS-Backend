@@ -1,5 +1,6 @@
 const Visit = require("../../models/visit");
 const { getHostAvailabilty } = require("../../models/users");
+const { createNotification } = require("../../models/notifications");
 const { AuthError, CustomError, visitPurposes } = require("../../utils");
 const { isHostAvailable } = require("../../utils/services");
 
@@ -25,7 +26,18 @@ async function createVisit(req, res, next) {
     if (hostAvailable) {
       try {
         const result = await Visit.checkIn(visitor);
-        res.status(201).json(result);
+
+        const notification = {
+          recipient: visitor.host,
+          title: "New visitor check in.",
+          message: `${visitor.firstname} has just checked in to see you. The reason for visit is ${visitor.purpose}.`,
+        };
+
+        // await notifyHostOnCheckIn(notification);
+
+        await createNotification(notification);
+
+        return res.status(201).json(result);
       } catch (error) {
         next(error);
       }

@@ -9,6 +9,7 @@ const cookieParser = require("cookie-parser");
 const indexRoutes = require("./routes/index");
 const authRoutes = require("./routes/auth");
 const visitRoutes = require("./routes/visits");
+const notificationRoutes = require("./routes/notifications");
 const userRoutes = require("./routes/users");
 const middleware = require("./middleware/index");
 
@@ -37,6 +38,7 @@ app.use(cookieParser()); // parse cookies
 app.use("/api", indexRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/visits", visitRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
 
 // Error handling middleware and NotFound middleware
