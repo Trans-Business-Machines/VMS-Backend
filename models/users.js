@@ -95,6 +95,21 @@ async function createTokens(user, existingToken) {
   };
 }
 
+async function getSchedules() {
+  try {
+    const result = await Schedule.find()
+      .populate({
+        path: "host",
+        select: "firstname lastname",
+      })
+      .lean();
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function get(filter, options = { includePassword: false }) {
   try {
     const projection = options.includePassword ? "-__v" : "-__v -password";
@@ -207,7 +222,9 @@ async function retrieveHosts() {
     const hosts = Users.find(
       { role: { $in: ["host", "receptionist"] } },
       { _id: 1, firstname: 1, lastname: 1, role: 1 }
-    ).lean();
+    )
+      .sort({ role: -1 })
+      .lean();
 
     return hosts;
   } catch (error) {
@@ -226,5 +243,6 @@ module.exports = {
   createSchedule,
   retrieveHosts,
   updateSchedule,
+  getSchedules,
   getHostAvailabilty,
 };

@@ -12,10 +12,12 @@ const {
   updateUser,
   setAvailability,
   updateAvailability,
+  getHostsWithSchedules,
 } = require("../controllers/users");
 
 router.get("/", authenticate, getUsers);
 router.get("/roles", authenticate, getRoles);
+router.get("/hosts-with-schedules", authenticate, getHostsWithSchedules);
 router.get("/:id", authenticate, getOneUser);
 
 router.post("/schedule/:hostId", authenticate, setAvailability);

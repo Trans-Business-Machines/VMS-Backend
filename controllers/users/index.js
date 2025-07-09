@@ -276,6 +276,22 @@ async function getHosts(req, res, next) {
   }
 }
 
+async function getHostsWithSchedules(req, res, next) {
+  const user = req.user;
+
+  if (!["admin", "super admin"].includes(user.role)) {
+    return next(new AuthError("Only admins can view host schedules", 403));
+  }
+
+  try {
+    const schedules = await Users.getSchedules();
+
+    res.json(schedules);
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   getUsers,
   getOneUser,
@@ -285,4 +301,5 @@ module.exports = {
   setAvailability,
   getHosts,
   updateAvailability,
+  getHostsWithSchedules,
 };
