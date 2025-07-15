@@ -46,4 +46,37 @@ async function sendEmail(user, password) {
   }
 }
 
-module.exports = { sendEmail };
+async function sendEmailToAdmin(user) {
+  const mailOptions = {
+    from: user.email,
+    to: MAIL_USER,
+    subject: "Account Creation Request",
+    html: ` <body style="margin: 0; padding: 2rem; font-family: Arial, sans-serif; background: linear-gradient(to right, #65DFBF, #1D528E);">
+  <div style="max-width: 600px; margin: auto; background:#ffffff;  color: #1D528E; padding: 2rem; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
+    <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Account registration request for Visitor Management System (VMS)</h2>
+    <p style="font-size: 1.1rem;">Hello Admin,</p>
+    <p style="font-size: 1.1rem;">I would like to request for account registration in the system. Below are my details:</p>
+    
+    <ul style="font-size: 1.05rem; padding-left: 1rem; line-height: 1.6;">
+      <li><strong>Firstname:</strong> ${user.firstname}</li>
+      <li><strong>Lastname:</strong> ${user.lastname}</li>
+      <li><strong>Email:</strong> ${user.email}</li>
+      <li><strong>Phone:</strong> ${user.phone}</li>
+      <li><strong>Requested Role:</strong> ${user.role}</li>
+    </ul>
+
+    <p style="font-size: 1.1rem; margin-top: 1.5rem;">Thank you.</p>
+  </div>
+</body>
+`
+  }
+
+  try {
+    const response = await transporter.sendMail(mailOptions)
+    return response
+  } catch (error) {
+    throw error
+  }
+}
+
+module.exports = { sendEmail, sendEmailToAdmin };

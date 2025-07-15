@@ -9,7 +9,7 @@ const {
   jwtAccessTokenOpts,
   refreshTokenCookieOpts,
 } = require("../../constants");
-const { sendEmail } = require("../../utils/mailService");
+const { sendEmail, sendEmailToAdmin } = require("../../utils/mailService");
 
 // Load .env variables
 dotenv.config();
@@ -46,9 +46,8 @@ async function register(req, res, next) {
     // send the response back to the client
     return res.status(201).json({
       success: true,
-      message: `User created successfully and ${
-        emailSent ? "credentials sent" : "credentials not sent."
-      } `,
+      message: `User created successfully and ${emailSent ? "credentials sent" : "credentials not sent."
+        } `,
       user,
     });
   } catch (error) {
@@ -120,9 +119,32 @@ function logout(req, res) {
   });
 }
 
+async function contactAdmin(req, res, next) {
+  const body = req.body
+
+  try {
+    let message = "Could not send email"
+    const result = await sendEmailToAdmin(body)
+
+    if (result) {
+      message = "Email was successfully sent"
+    }
+
+    res.json({
+      success: true,
+      message
+    })
+
+  } catch (error) {
+    next(error)
+  }
+
+}
+
 module.exports = {
   refreshTokens,
   register,
   login,
+  contactAdmin,
   logout,
 };
