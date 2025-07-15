@@ -9,9 +9,11 @@ const {
   getVisits,
   getTodaysVisits,
   deleteVisit,
+  getHostVisits
 } = require("../controllers/visits/");
 
 router.get("/", authenticate, getVisits);
+router.get("/host/:hostId", authenticate, getHostVisits);
 router.get("/today", authenticate, getTodaysVisits);
 router.post("/new", authenticate, createVisit);
 router.patch("/check-out/:visitId", authenticate, checkOut);

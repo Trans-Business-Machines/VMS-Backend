@@ -179,6 +179,41 @@ async function getTodaysVisitorStats(page) {
   }
 }
 
+async function getHostLogs(filter = {}, opts = {}) {
+  try {
+    const { limit, offset, page } = opts
+
+    const totalLogs = await Visit.countDocuments(filter)
+    const totalPages = Math.ceil(totalLogs / limit)
+
+    const hostLogs = await Visit.
+      find(filter)
+      .sort({ time_in: -1 })
+      .skip(offset)
+      .limit(limit)
+      .populate({
+        path: "checkin_officer",
+        select: "firstname lastname"
+      })
+      .select("-host -__v")
+      .lean()
+
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1
+
+    return {
+      hasNext,
+      hasPrev,
+      hostLogs,
+      totalPages,
+      current: page
+    }
+  } catch (error) {
+    throw error
+  }
+
+}
+
 /*------------------------  Export visit model methods ------------------------ */
 module.exports = {
   checkIn,
@@ -186,5 +221,6 @@ module.exports = {
   remove,
   list,
   getStatistics,
+  getHostLogs,
   getTodaysVisitorStats,
 };
