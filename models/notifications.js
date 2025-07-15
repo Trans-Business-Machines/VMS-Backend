@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 // Internal module imports
 const { notificationSchema } = require("../schemas/index");
 const { CustomError } = require("../utils/index");
+const { validateSubscription } = require("../utils/services")
 const Subscription = require("./subscription");
 const webPush = require("../config/notifications");
 
@@ -33,17 +34,22 @@ async function notifyHostOnCheckIn(notification) {
     // Destructure the notifiacation object
     const { recipient, title, message } = notification;
 
-    // Get the host subscription object from DB
-    const subscription = await Subscription.get({ user: recipient });
-    console.log("Getting the host subscription object...");
-
     // create push notification payload
     const payload = JSON.stringify({ title, message });
 
-    // send the push
-    await webPush.sendNotification(subscription, payload);
-    console.log("Push notification sent...");
-    console.log;
+    // Get the host subscription object from DB
+    console.log("Getting the host subscription object...");
+    const subscription = await Subscription.get({ user: recipient });
+
+    // Validate subscription object
+    console.log("Validating subscription object");
+    const isValid = validateSubscription(subscription)
+
+    if (isValid) {
+      await webPush.sendNotification(subscription, payload)
+      console.log("Notification sent")
+    }
+
   } catch (error) {
     throw error;
   }
@@ -110,7 +116,6 @@ async function updateAllAsRead(filter) {
 module.exports = {
   createNotification,
   list,
-  notifyHostOnCheckIn,
   updateOneAsRead,
   updateAllAsRead,
 };

@@ -82,7 +82,7 @@ async function markOneAsRead(req, res, next) {
   const id = req.params.id;
 
   // Ensure that only hosts or receptionists can update notifications
-  if (!["host", "receptionist"].includes(user.role)) {
+  if (["host", "receptionist"].includes(user.role)) {
     // Ensure that only hosts themselves can update their notifications
     if (user.userId !== updates.userId) {
       return new AuthError("You can't update another host's notification", 403);
