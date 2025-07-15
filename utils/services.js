@@ -37,4 +37,21 @@ async function isHostAvailable(visitorData, currentDate, getHostAvailabilty) {
   return true;
 }
 
-module.exports = { isHostAvailable };
+function validateSubscription(subscription) {
+  if (!subscription) {
+    throw new CustomError("Subscription is null or undefined", 400);
+  }
+
+  if (!subscription.endpoint) {
+    throw new CustomError("Subscription missing endpoint", 400);
+  }
+
+  if (!subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
+    throw CustomError("Subscription missing required keys", 400);
+  }
+
+  return true;
+}
+
+
+module.exports = { isHostAvailable, validateSubscription };
