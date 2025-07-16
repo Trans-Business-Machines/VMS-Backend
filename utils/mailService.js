@@ -79,4 +79,41 @@ async function sendEmailToAdmin(user) {
   }
 }
 
-module.exports = { sendEmail, sendEmailToAdmin };
+
+async function sendOTP(otp, email) {
+  const mailOptions = {
+    from: MAIL_USER,
+    to: email,
+    subject: "Reset Password",
+    html: `
+      <body style="padding: 2rem; font-family: Arial, sans-serif; background: linear-gradient(to right, #65DFBF, #1D528E);">
+  <div style="background: #fff; color: #1D528E; padding: 2rem; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+    <h2 style="margin-bottom: 1rem;">Password Reset Request</h2>
+    
+    <p style="margin-bottom: 1rem;">
+      You recently requested to reset your password. Use the One-Time Passcode (OTP) below to complete the process. This code is valid for <strong>15 minutes</strong>.
+    </p>
+    
+    <p style="font-weight: bold; font-size: 2rem; margin: 1rem 0; text-align: center;">
+      <strong>${otp}</strong>
+    </p>
+
+    <p style="margin-bottom: 1rem;">
+      If you did not request this, you can safely ignore this email.
+    </p>
+  </div>
+</body>
+
+    `
+  }
+
+  try {
+    const response = await transporter.sendMail(mailOptions)
+    return response
+  } catch (error) {
+    throw error
+  }
+
+}
+
+module.exports = { sendEmail, sendEmailToAdmin, sendOTP };
