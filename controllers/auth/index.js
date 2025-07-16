@@ -4,12 +4,14 @@ const dotenv = require("dotenv");
 
 // Import the internal modules
 const Users = require("../../models/users");
+const OTP = require("../../models/otps")
 const { CustomError } = require("../../utils");
 const {
   jwtAccessTokenOpts,
   refreshTokenCookieOpts,
 } = require("../../constants");
-const { sendEmail, sendEmailToAdmin } = require("../../utils/mailService");
+const { sendEmail, sendEmailToAdmin, sendOTP } = require("../../utils/mailService");
+const { generateOTP } = require("../../utils/services")
 
 // Load .env variables
 dotenv.config();
@@ -141,10 +143,72 @@ async function contactAdmin(req, res, next) {
 
 }
 
+async function forgotPassword(req, res, next) {
+  // get the user from DB
+  const { email = "" } = req.body
+
+  if (!email) {
+    return next(new CustomError("You need to provide an email address", 400))
+  }
+
+  // Get user by email
+  const user = await Users.get({ email }, { includePassword: false })
+
+  // if  user generate OTP and share
+  if (user) {
+    // Generate OTP
+    const otp = generateOTP();
+    try {
+      // store OTP in DB
+      const success = await OTP.storeOTP(otp, user.email)
+
+      if (!success) {
+        throw new CustomError("Could not save OTP", 500);
+      }
+
+      // send email to user
+      await sendOTP(otp, user.email);
+
+    }
+    catch (error) {
+      throw error
+    }
+  }
+
+  // send a generic response
+  res.json({
+    message: "A reset code has been sent to you email, If you don't see it, double-check the address you entered and try again."
+  })
+
+}
+
+async function verifyOneTimePassCode(req, res, next) {
+  const { otp, email } = req.body;
+
+  if (!email || !otp) {
+    return next(new CustomError("You must provide an email and the OTP code.", 400))
+  }
+
+  const user = await Users.get({ email })
+
+  try {
+    const token = await OTP.createResetToken(otp, { email: user.email, userId: user._id });
+
+    return res.json({
+      resetToken: token
+    })
+
+  } catch (error) {
+    throw error
+  }
+}
+
 module.exports = {
   refreshTokens,
   register,
   login,
   contactAdmin,
   logout,
+  verifyOneTimePassCode,
+  forgotPassword
 };

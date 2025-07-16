@@ -3,6 +3,11 @@ const jwtAccessTokenOpts = { algorithm: "HS256", expiresIn: "1h" };
 const jwtRefreshTokenOpts = {
   algorithm: "HS256",
   expiresIn: "1d",
+}
+
+const jwtResetTokenOpts = {
+  algorithm: "HS256",
+  expiresIn: "12min",
 };
 
 // TODO: include secure and sameSite options during production
@@ -16,6 +21,7 @@ const SALT_ROUNDS = 10;
 
 module.exports = {
   SALT_ROUNDS,
+  jwtResetTokenOpts,
   jwtAccessTokenOpts,
   jwtRefreshTokenOpts,
   refreshTokenCookieOpts,
