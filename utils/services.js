@@ -1,3 +1,4 @@
+const crypto = require("node:crypto")
 const { isAfter, isBefore, format } = require("date-fns");
 const { CustomError } = require("./");
 
@@ -53,5 +54,11 @@ function validateSubscription(subscription) {
   return true;
 }
 
+function generateOTP() {
+  let randomOtp = crypto.randomInt(100000, 999999)
+  randomOtp = randomOtp.toString()
+  return randomOtp;
+}
 
-module.exports = { isHostAvailable, validateSubscription };
+
+module.exports = { isHostAvailable, validateSubscription, generateOTP };
