@@ -232,6 +232,31 @@ async function retrieveHosts() {
   }
 }
 
+async function resetOldPassword(userId, password) {
+  try {
+    // hash the new password
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // create an updates object
+    const updates = {
+      password: hashedPassword
+    }
+
+    // update password in the db
+    const response = await Users.findByIdAndUpdate(userId, updates, {
+      runValidators: true
+    })
+
+    if (!response) {
+      throw new CustomError("Could not reset password!", 500);
+    }
+
+  } catch (error) {
+    throw error
+  }
+
+}
+
 /* ------------------------- Export the user methods  -------------------------*/
 module.exports = {
   createAccount,
@@ -245,4 +270,5 @@ module.exports = {
   updateSchedule,
   getSchedules,
   getHostAvailabilty,
+  resetOldPassword
 };

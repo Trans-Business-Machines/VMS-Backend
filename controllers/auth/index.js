@@ -177,7 +177,7 @@ async function forgotPassword(req, res, next) {
 
   // send a generic response
   res.json({
-    message: "A reset code has been sent to you email, If you don't see it, double-check the address you entered and try again."
+    message: "A reset code has been sent to your email, If you don't see it, double-check the email address you entered and try again."
   })
 
 }
@@ -203,6 +203,33 @@ async function verifyOneTimePassCode(req, res, next) {
   }
 }
 
+async function resetPassword(req, res, next) {
+  const { password, resetToken } = req.body
+
+  if (!password || !resetToken) {
+    return next(new CustomError("You must provide a password and a reset token", 400))
+  }
+
+  try {
+
+    const userDetails = jwt.verify(resetToken, JWT_TOKEN_SECRET)
+
+    if (!userDetails && userDetails.purpose !== "reset-password") {
+      throw new CustomError("Invalid reset token!", 400)
+    }
+
+    await Users.resetOldPassword(userDetails.userId, password);
+
+    res.json({
+      success: true,
+      message: "Password has been successfully reset."
+    })
+
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   refreshTokens,
   register,
@@ -210,5 +237,6 @@ module.exports = {
   contactAdmin,
   logout,
   verifyOneTimePassCode,
-  forgotPassword
+  forgotPassword,
+  resetPassword
 };

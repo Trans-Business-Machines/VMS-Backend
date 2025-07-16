@@ -7,7 +7,7 @@ const { addMinutes } = require("date-fns")
 
 // Internal module imports
 const { OTPSchema } = require("../schemas")
-const { SALT_ROUNDS, jwtResetTokenOpts } = require("../constants");
+const { jwtResetTokenOpts } = require("../constants");
 const { CustomError } = require("../utils/index")
 
 // load env variables
