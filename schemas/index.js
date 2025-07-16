@@ -211,6 +211,36 @@ const subscriptionSchema = new mongoose.Schema({
   },
 });
 
+/* ----------------- OTP schema ----------------- */
+const OTPSchema = new mongoose.Schema({
+  _id: { type: String, default: createId },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    validate: {
+      validator: isEmail,
+      message: (props) => `${props.value} is not a valid email address`
+    }
+  },
+  otp: {
+    type: String,
+    required: true
+  },
+  verified: {
+    type: Boolean,
+    default: false
+  },
+  expiresAt: {
+    type: Date
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+
+})
+
 /* ----------------- Exports  ----------------- */
 module.exports = {
   userSchema,
@@ -218,4 +248,5 @@ module.exports = {
   scheduleSchema,
   notificationSchema,
   subscriptionSchema,
+  OTPSchema
 };
