@@ -72,13 +72,17 @@ async function list(filter, opts = {}) {
     const hasNext = page < totalPages;
     const hasPrev = page > 1;
 
-    return {
+    const response = {
       hasPrev,
       hasNext,
       notifications: result,
       currentPage: page,
       totalPages,
-    };
+    }
+    if (filter.isRead === false) {
+      response.count = totalNotifications
+    }
+    return response;
   } catch (error) {
     throw error;
   }
