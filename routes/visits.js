@@ -1,9 +1,22 @@
-const express = require("express");
-const router = express.Router();
-const { authenticate } = require("../middleware/auth");
+const express = require("express")
+const router = express.Router()
 
-router.get("/new", authenticate, (req, res) => {
-  res.json({ success: true, message: "Protected visit created successful" });
-});
+// Import internal modules
+const { authenticate } = require("../middleware/auth");
+const {
+  createVisit,
+  checkOut,
+  getVisits,
+  getTodaysVisits,
+  deleteVisit,
+  getHostVisits
+} = require("../controllers/visits/");
+
+router.get("/", authenticate, getVisits);
+router.get("/host/:hostId", authenticate, getHostVisits);
+router.get("/today", authenticate, getTodaysVisits);
+router.post("/new", authenticate, createVisit);
+router.patch("/check-out/:visitId", authenticate, checkOut);
+router.delete("/:visitId", authenticate, deleteVisit);
 
 module.exports = router;

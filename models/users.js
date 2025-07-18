@@ -20,10 +20,11 @@ const JWT_TOKEN_SECRET = process.env.JWT_TOKEN_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 // Import the user schema from schemas directory
-const { userSchema } = require("../schemas");
+const { userSchema, scheduleSchema } = require("../schemas");
 
 // Create the users model
 const Users = mongoose.model("Users", userSchema);
+const Schedule = mongoose.model("Schedules", scheduleSchema);
 
 /* ------------------------- User Model Functions  -------------------------*/
 async function createAccount(fields) {
@@ -94,9 +95,25 @@ async function createTokens(user, existingToken) {
   };
 }
 
-async function get(filter) {
+async function getSchedules() {
   try {
-    const user = await Users.findOne(filter).lean().select("-__v");
+    const result = await Schedule.find()
+      .populate({
+        path: "host",
+        select: "firstname lastname",
+      })
+      .lean();
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function get(filter, options = { includePassword: false }) {
+  try {
+    const projection = options.includePassword ? "-__v" : "-__v -password";
+    const user = await Users.findOne(filter).select(projection);
 
     if (!user) {
       throw new CustomError("User not found!", 404);
@@ -104,18 +121,29 @@ async function get(filter) {
 
     return user;
   } catch (error) {
-    throw new CustomError(error ? error.message : "User not found!", 404);
+    throw error;
   }
 }
 
 async function list(opts = {}) {
-  const { limit, offset } = opts;
+  const { limit, offset, role } = opts;
 
   const totalUsers = await Users.countDocuments();
   const totalPages = Math.ceil(totalUsers / limit);
 
+  let filter = {};
+
+  // if you are a super admin you can view all users except yourself
+
+  if (role === "super admin") {
+    filter.role = { $ne: "super admin" };
+  }
+  //  Otherwise if you are admin you can only view hosts, soldier, and receptionist users only.
+  else if (role === "admin") {
+    filter.role = { $nin: ["super admin", "admin"] };
+  }
+
   try {
-    const filter = { role: { $ne: "admin" } };
     const users = await Users.find(filter, "-password", { lean: true })
       .sort({ createdAt: -1 })
       .skip(offset)
@@ -133,17 +161,11 @@ async function list(opts = {}) {
 
 async function update(updates, filter) {
   try {
-    // Hash the password if it is being updated
-    if (updates.hasOwnProperty("password")) {
-      updates.password = await bcrypt.hash(updates.password, SALT_ROUNDS);
-    }
-
     const result = await Users.findByIdAndUpdate(filter, updates, {
-      new: true,
       runValidators: true,
     })
-      .lean()
-      .select("-__v");
+      .select("-__v -password")
+      .lean();
 
     return result;
   } catch (error) {
@@ -155,12 +177,84 @@ async function remove(filter) {
   try {
     const result = await Users.deleteOne(filter);
     if (result.deletedCount === 0) {
-      throw new CustomError("User not found or already deleted", 404);
+      throw new CustomError("User not found or already deleted!", 404);
     }
     return { message: "User deleted successfully" };
   } catch (error) {
     throw error;
   }
+}
+
+async function createSchedule(fields) {
+  try {
+    const result = await Schedule.create(fields);
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function updateSchedule(updates, filter) {
+  try {
+    const result = await Schedule.findOneAndUpdate(filter, updates, {
+      runValidators: true,
+    });
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function getHostAvailabilty(hostId) {
+  try {
+    const schedule = await Schedule.findOne({ host: hostId })
+      .select("-__v")
+      .lean();
+
+    return schedule;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function retrieveHosts() {
+  try {
+    const hosts = Users.find(
+      { role: { $in: ["host", "receptionist"] } },
+      { _id: 1, firstname: 1, lastname: 1, role: 1 }
+    )
+      .sort({ role: -1 })
+      .lean();
+
+    return hosts;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function resetOldPassword(userId, password) {
+  try {
+    // hash the new password
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // create an updates object
+    const updates = {
+      password: hashedPassword
+    }
+
+    // update password in the db
+    const response = await Users.findByIdAndUpdate(userId, updates, {
+      runValidators: true
+    })
+
+    if (!response) {
+      throw new CustomError("Could not reset password!", 500);
+    }
+
+  } catch (error) {
+    throw error
+  }
+
 }
 
 /* ------------------------- Export the user methods  -------------------------*/
@@ -171,4 +265,10 @@ module.exports = {
   list,
   remove,
   update,
+  createSchedule,
+  retrieveHosts,
+  updateSchedule,
+  getSchedules,
+  getHostAvailabilty,
+  resetOldPassword
 };

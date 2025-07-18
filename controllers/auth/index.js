@@ -4,11 +4,14 @@ const dotenv = require("dotenv");
 
 // Import the internal modules
 const Users = require("../../models/users");
-const { CustomError, sendEmail } = require("../../utils");
+const OTP = require("../../models/otps")
+const { CustomError } = require("../../utils");
 const {
   jwtAccessTokenOpts,
   refreshTokenCookieOpts,
 } = require("../../constants");
+const { sendEmail, sendEmailToAdmin, sendOTP } = require("../../utils/mailService");
+const { generateOTP } = require("../../utils/services")
 
 // Load .env variables
 dotenv.config();
@@ -21,7 +24,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 async function register(req, res, next) {
   const user = req.user;
 
-  if (user.role !== "admin") {
+  if (!["super admin", "admin"].includes(user.role)) {
     return next(
       new CustomError("Forbidden, only admin can create users.", 403)
     );
@@ -35,19 +38,18 @@ async function register(req, res, next) {
     let emailSent = false;
 
     //try to send email to the  client
-    try {
+    /* try {
       await sendEmail(user, password);
       emailSent = true;
     } catch (error) {
       next(error);
-    }
+    } */
 
     // send the response back to the client
     return res.status(201).json({
       success: true,
-      message: `User created successfully and ${
-        emailSent ? "credentials sent" : "credentials not sent."
-      } `,
+      message: `User created successfully and ${emailSent ? "credentials sent" : "credentials not sent."
+        } `,
       user,
     });
   } catch (error) {
@@ -94,7 +96,7 @@ function refreshTokens(req, res, next) {
     const decoded = jwt.verify(token, JWT_REFRESH_SECRET);
 
     const accessToken = jwt.sign(
-      { userId: decoded._id, role: decoded.role },
+      { userId: decoded.userId, role: decoded.role },
       JWT_TOKEN_SECRET,
       jwtAccessTokenOpts
     );
@@ -119,9 +121,122 @@ function logout(req, res) {
   });
 }
 
+async function contactAdmin(req, res, next) {
+  const body = req.body
+
+  try {
+    let message = "Could not send email"
+    const result = await sendEmailToAdmin(body)
+
+    if (result) {
+      message = "Email was successfully sent"
+    }
+
+    res.json({
+      success: true,
+      message
+    })
+
+  } catch (error) {
+    next(error)
+  }
+
+}
+
+async function forgotPassword(req, res, next) {
+  // get the user from DB
+  const { email = "" } = req.body
+
+  if (!email) {
+    return next(new CustomError("You need to provide an email address", 400))
+  }
+
+  // Get user by email
+  const user = await Users.get({ email }, { includePassword: false })
+
+  // if  user generate OTP and share
+  if (user) {
+    // Generate OTP
+    const otp = generateOTP();
+    try {
+      // store OTP in DB
+      const success = await OTP.storeOTP(otp, user.email)
+
+      if (!success) {
+        throw new CustomError("Could not save OTP", 500);
+      }
+
+      // send email to user
+      await sendOTP(otp, user.email);
+
+    }
+    catch (error) {
+      throw error
+    }
+  }
+
+  // send a generic response
+  res.json({
+    message: "A reset code has been sent to your email, If you don't see it, double-check the email address you entered and try again."
+  })
+
+}
+
+async function verifyOneTimePassCode(req, res, next) {
+  const { otp, email } = req.body;
+
+  if (!email || !otp) {
+    return next(new CustomError("You must provide an email and the OTP code.", 400))
+  }
+
+  const user = await Users.get({ email })
+
+  try {
+    const token = await OTP.createResetToken(otp, { email: user.email, userId: user._id });
+
+    return res.json({
+      resetToken: token
+    })
+
+  } catch (error) {
+    throw error
+  }
+}
+
+async function resetPassword(req, res, next) {
+  const { password, resetToken } = req.body
+
+  if (!password || !resetToken) {
+    return next(new CustomError("You must provide a password and a reset token", 400))
+  }
+
+  try {
+
+    const userDetails = jwt.verify(resetToken, JWT_TOKEN_SECRET)
+
+    if (!userDetails && userDetails.purpose !== "reset-password") {
+      throw new CustomError("Invalid reset token!", 400)
+    }
+
+    await Users.resetOldPassword(userDetails.userId, password);
+
+    res.json({
+      success: true,
+      message: "Password has been successfully reset."
+    })
+
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   refreshTokens,
   register,
   login,
+  contactAdmin,
   logout,
+  verifyOneTimePassCode,
+  forgotPassword,
+  resetPassword
 };

@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcryptjs");
 const Users = require("../models/users");
 const { AuthError, CustomError } = require("../utils/index");
+const { SALT_ROUNDS } = require("../constants");
 
 // Load the environment variables
 dotenv.config();
@@ -20,7 +21,7 @@ function authenticate(req, res, next) {
   }
 
   accessToken = accessToken.replace(/^bearer\s*/i, "");
-  
+
   // Verify token signature
   try {
     // decode the jwt payload
@@ -50,7 +51,7 @@ async function getUser(req, res, next) {
     : { phone: fields.phone };
 
   // Get the user object from DB
-  const user = await Users.get(filter);
+  const user = await Users.get(filter, { includePassword: true });
 
   // if no user is found throw not found error
   if (!user) {
@@ -72,7 +73,42 @@ async function getUser(req, res, next) {
   next();
 }
 
+async function checkPasswordValidity(req, res, next) {
+  const targetUpdates = req.body;
+
+  if (
+    targetUpdates.hasOwnProperty("currentPassword") &&
+    targetUpdates.hasOwnProperty("newPassword")
+  ) {
+    const targetUser = await Users.get(
+      { _id: req.user.userId },
+      { includePassword: true }
+    );
+
+    const { currentPassword, newPassword, ...otherUpdates } = targetUpdates;
+
+    const passwordMatch = await bcrypt.compare(
+      currentPassword,
+      targetUser.password
+    );
+
+    if (!passwordMatch) {
+      return res.status(400).json({ message: "Incorrect password!" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    req.updates = { ...otherUpdates, password: hashedPassword };
+    next();
+  } else {
+    // call the next handler
+    req.updates = targetUpdates;
+    next();
+  }
+}
+
 module.exports = {
   authenticate,
   getUser,
+  checkPasswordValidity,
 };
