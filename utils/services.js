@@ -60,5 +60,20 @@ function generateOTP() {
   return randomOtp;
 }
 
+function capitalize(string) {
+  let strArr = string.split(" ");
 
-module.exports = { isHostAvailable, validateSubscription, generateOTP };
+  strArr = strArr.map((item) => {
+    let newItem = "";
+    if (item.length === 2 && item !== "up") {
+      newItem = item.toUpperCase();
+    } else {
+      newItem = item[0].substring(0).toUpperCase() + item.substring(1);
+    }
+    return newItem;
+  });
+
+  return strArr.join(" ");
+}
+
+module.exports = { isHostAvailable, validateSubscription, generateOTP, capitalize };
