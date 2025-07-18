@@ -1,6 +1,5 @@
 // Import external modules
 const mongoose = require("mongoose");
-const PDFDocument = require("pdfkit");
 const { endOfDay, startOfDay } = require("date-fns");
 
 // Import internal modules
@@ -242,9 +241,48 @@ async function getMonthlyData(monthStart, monthEnd) {
       }
     ])
 
+
+    // Top 3 hosts with the most visits
+    const topHosts = await Visit.aggregate([
+      {
+        $match: {
+          visit_date: { $gte: monthStart, $lte: monthEnd }
+        }
+      },
+      {
+        $group: {
+          _id: "$host", // Group by host ID
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 3 },
+      {
+        $lookup: {
+          from: "users",         // Name of the Users collection
+          localField: "_id",     // host ObjectId
+          foreignField: "_id",   // match against _id in users
+          as: "hostInfo"
+        }
+      },
+      {
+        $unwind: "$hostInfo"
+      },
+      {
+        $project: {
+          count: 1,
+          firstname: "$hostInfo.firstname",
+          lastname: "$hostInfo.lastname",
+          email: "$hostInfo.email"
+        }
+      }
+    ]);
+
+
     return {
       totalVisits,
-      topPurposes
+      topPurposes,
+      topHosts
     }
 
   } catch (error) {
