@@ -1,5 +1,6 @@
 // Import external modules
 const mongoose = require("mongoose");
+const PDFDocument = require("pdfkit");
 const { endOfDay, startOfDay } = require("date-fns");
 
 // Import internal modules
@@ -9,7 +10,6 @@ const { CustomError } = require("../utils/");
 const Visit = mongoose.model("Visit", visitSchema);
 
 /*------------------------ Visit model methods ------------------------ */
-
 async function checkIn(visitorData) {
   try {
     let result = await Visit.create(visitorData);
@@ -214,6 +214,44 @@ async function getHostLogs(filter = {}, opts = {}) {
 
 }
 
+async function getMonthlyData(monthStart, monthEnd) {
+  try {
+    // count total visits
+    const totalVisits = await Visit.countDocuments({
+      visit_date: { $gte: monthStart, $lte: monthEnd }
+    })
+
+    // Get the top 5 reasons for visit 
+    const topPurposes = await Visit.aggregate([
+      {
+        $match: {
+          visit_date: { $gte: monthStart, $lte: monthEnd }
+        }
+      },
+      {
+        $group: {
+          _id: "$purpose",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { count: -1 }
+      },
+      {
+        $limit: 5
+      }
+    ])
+
+    return {
+      totalVisits,
+      topPurposes
+    }
+
+  } catch (error) {
+    throw error
+  }
+}
+
 /*------------------------  Export visit model methods ------------------------ */
 module.exports = {
   checkIn,
@@ -223,4 +261,5 @@ module.exports = {
   getStatistics,
   getHostLogs,
   getTodaysVisitorStats,
+  getMonthlyData
 };
