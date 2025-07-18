@@ -23,60 +23,39 @@ async function generateMontlyReport(req, res, next) {
 
   try {
     // Get the monthly data from the DB
-    const reportData = await getMonthlyData(start, end);
+    const { topPurposes, totalVisits, topHosts } = await getMonthlyData(start, end);
+    const doc = new PDFDocument({ size: "A4" });
 
-    // create pdf document instance
-    const doc = new PDFDocument();
-
-    // set the appropriate headers for this response
+    // Pipe to HTTP response
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=monthly_report.pdf"
-    );
-
-    // pipe the file to the HTTP response object
+    res.setHeader("Content-Disposition", "attachment; filename=monthly-report.pdf");
     doc.pipe(res);
 
-    doc
-      .fontSize(24)
-      .text("Monthly Visitors Report", { align: "center", underline: true });
+    // Title
+    doc.fontSize(20).text("Monthly Visitor Report", { align: "center" });
+    doc.moveDown(1.5);
 
-    doc.fontSize(16).text(`Total visitors: ${reportData.totalVisits}`);
-    doc.moveDown();
+    // Total visits
+    doc.fontSize(16).text(`Total Visitors This Month: ${totalVisits}`);
+    doc.moveDown(1);
 
-    // Add top 3 hosts
-    doc.text("Top 3 hosts with most visitors:");
-    reportData.topHosts.forEach((h, index) => {
-      doc.text(
-        `${index + 1}.  ${capitalize(h.firstname)} ${capitalize(
-          h.lastname
-        )} - ${h.count} visits`,
-        {
-          indent: 20,
-        }
-      );
+    // Top 5 Purposes
+    doc.fontSize(16).text("Top 5 Visit Purposes:", { underline: true });
+    doc.moveDown(0.5);
+    topPurposes.forEach((p, index) => {
+      doc.fontSize(14).text(`${index + 1}. ${capitalize(p._id)} — ${p.count} visits`);
     });
 
-    doc.moveDown();
+    doc.moveDown(1);
 
-    // Add top 5 visit purposes
-    doc.text("Top 5 visit purposes:");
-    reportData.topPurposes?.forEach((p, index) => {
-      doc.text(`${index + 1}.  ${capitalize(p._id)} - ${p.count} visitors`, {
-        indent: 20,
-      });
+    // Top 3 Hosts
+    doc.fontSize(16).text("Top 3 Hosts With Most Visits:", { underline: true });
+    doc.moveDown(0.5);
+    topHosts.forEach((h, index) => {
+      const name = `${capitalize(h.firstname)} ${capitalize(h.lastname)}`;
+      doc.fontSize(14).text(`${index + 1}. ${name} — ${h.count} visits`);
     });
 
-    // Move cursor near the bottom
-    doc.moveDown(50);
-
-    doc
-      .fontSize(14)
-      .font("Helvetica-Oblique")
-      .text("Visitor Management System", { align: "center" });
-
-    // End the stream
     doc.end();
   } catch (error) {
     next(error);
