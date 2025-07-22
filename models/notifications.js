@@ -4,9 +4,7 @@ const mongoose = require("mongoose");
 // Internal module imports
 const { notificationSchema } = require("../schemas/index");
 const { CustomError } = require("../utils/index");
-const { validateSubscription } = require("../utils/services")
-const Subscription = require("./subscription");
-const webPush = require("../config/notifications");
+
 
 // create a notification model
 const Notification = mongoose.model("notifications", notificationSchema);
@@ -25,7 +23,7 @@ async function createNotification(notification) {
   }
 }
 
-async function notifyHostOnCheckIn(notification) {
+/* async function notifyHostOnCheckIn(notification) {
   try {
     // Save the notification to the database
     await createNotification(notification);
@@ -54,6 +52,7 @@ async function notifyHostOnCheckIn(notification) {
     throw error;
   }
 }
+ */
 
 async function list(filter, opts = {}) {
   const { page, limit } = opts;
