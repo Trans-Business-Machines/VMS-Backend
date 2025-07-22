@@ -11,7 +11,6 @@ const Subscription = mongoose.model("subscription", subscriptionSchema);
 
 async function newSubscription(fields) {
   try {
-    console.log("Subcription object to insert: ", fields);
     const subscriptionObj = await Subscription.create(fields);
     return subscriptionObj;
   } catch (error) {

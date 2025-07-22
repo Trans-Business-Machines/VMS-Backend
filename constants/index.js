@@ -7,14 +7,14 @@ const jwtRefreshTokenOpts = {
 
 const jwtResetTokenOpts = {
   algorithm: "HS256",
-  expiresIn: "12min",
+  expiresIn: "10min",
 };
 
-// TODO: include secure and sameSite options during production
-// For now, we are setting httpOnly to true to prevent client-side access`
+
 const refreshTokenCookieOpts = {
   httpOnly: true,
   secure: true,
+  sameSite: "None",
   maxAge: 24 * 60 * 60 * 1000, // 1day
 };
 

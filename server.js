@@ -22,10 +22,19 @@ const MONGO_URI = process.env.MONGO_URI;
 // create express app instance
 const app = express();
 
+// Define allowed front-end origins
+const allowedOrigin = ["http://localhost:5173", "https://vms-fe-jet.vercel.app"]
+
 // Middleware to parse request bodies, cookies, and also allow cors
 app.use(
   cors({
-    origin: "http://localhost:5173", // allow requests from this origin
+    origin: function (origin, cb) {
+      if (!origin || allowedOrigin.includes(origin)) {
+        cb(null, true);
+      } else {
+        cb(new Error("Not allowed by CORS!"))
+      }
+    },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // allow these HTTP methods
     allowedHeaders: ["Content-Type", "Authorization", "Accept"], // allow these headers
     credentials: true, // allow cookies to be sent
@@ -49,10 +58,8 @@ app.use(middleware.handleNotFound);
 mongoose
   .connect(MONGO_URI)
   .then(() => {
-    console.log("Mongo DB connected");
     app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
   })
   .catch((err) => {
     console.log("Connection failed!");
-    console.error(err);
   });
