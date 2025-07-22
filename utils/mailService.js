@@ -22,7 +22,7 @@ async function sendEmail(user, password) {
     to: user.email.trim(),
     subject: "Your New Account Details",
     html: `
-      <body style="padding: 2rem; font-family: Arial, sans-serif;">
+      <body style="margin: 0; padding: 2rem; font-family: Arial, sans-serif; background: linear-gradient(to right, #65DFBF, #1D528E);">
         <div style="background: #fff; color: #1D528E; padding: 1.5rem; border-radius: 10px;">
           <h2>Welcome to Visitor Management System (VMS) 🎉</h2>
           <p>Hello <strong>${user.firstname}</strong>, your account has been created.</p>
@@ -30,9 +30,14 @@ async function sendEmail(user, password) {
           <p>You can log in using:</p>
           <ul>
             <li><strong>Email:</strong> ${user.email}</li>
-            <li><strong>Phone:</strong> ${user.phone}</li>
             <li><strong>Password:</strong> ${password}</li>
           </ul>
+          <p>Or</p>
+           <ul>
+            <li><strong>Email:</strong> ${user.phone}</li>
+            <li><strong>Password:</strong> ${password}</li>
+          </ul>
+
           <p>Please change your password upon login for security.</p>
         </div>
       </body>
