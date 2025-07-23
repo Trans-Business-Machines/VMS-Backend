@@ -23,13 +23,17 @@ const MONGO_URI = process.env.MONGO_URI;
 const app = express();
 
 // Define allowed front-end origins
-const allowedOrigin = ["http://localhost:5173", "https://vms-fe-jet.vercel.app"]
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://vms-fe-jet.vercel.app",
+  "https://frontend-2-git-fix-refresh-ephy-kimothos-projects.vercel.app"
+]
 
 // Middleware to parse request bodies, cookies, and also allow cors
 app.use(
   cors({
     origin: function (origin, cb) {
-      if (!origin || allowedOrigin.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin)) {
         cb(null, true);
       } else {
         cb(new Error("Not allowed by CORS!"))
