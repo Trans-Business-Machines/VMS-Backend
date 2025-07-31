@@ -133,7 +133,7 @@ async function getMyAvailabilty(req, res, next) {
 
   try {
 
-    const hostAvailability = Users.getHostAvailabilty(requesterId)
+    const hostAvailability = await Users.getHostAvailabilty(requesterId)
     res.json({ success: true, schedule: hostAvailability })
 
   } catch (error) {
