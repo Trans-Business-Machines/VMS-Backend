@@ -34,7 +34,7 @@ async function sendEmail(user, password) {
           </ul>
           <p>Or</p>
            <ul>
-            <li><strong>Email:</strong> ${user.phone}</li>
+            <li><strong>Phone:</strong> ${user.phone}</li>
             <li><strong>Password:</strong> ${password}</li>
           </ul>
 

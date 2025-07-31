@@ -123,6 +123,25 @@ async function setAvailability(req, res, next) {
   }
 }
 
+async function getMyAvailabilty(req, res, next) {
+  const user = req.user;
+  const requesterId = req.params.hostId
+
+  if (user.userId !== requesterId) {
+    return next(new AuthError("Forbidden, You can only access your own schedules", 403))
+  }
+
+  try {
+
+    const hostAvailability = Users.getHostAvailabilty(requesterId)
+    res.json({ success: true, schedule: hostAvailability })
+
+  } catch (error) {
+    next(error)
+  }
+
+}
+
 async function updateAvailability(req, res, next) {
   const user = req.user;
   const hostId = req.params.hostId;
@@ -166,6 +185,30 @@ async function updateAvailability(req, res, next) {
     });
   } catch (error) {
     next(error);
+  }
+}
+
+async function deleteMyAvailability(req, res, next) {
+  const user = req.user;
+  const requesterId = req.params.hostId
+
+  if (user.userId !== requesterId) {
+    return next(new AuthError("Forbidden, You can only delete your schedules", 403))
+  }
+
+  try {
+
+    const success = Users.deleteMyAvailability(requesterId)
+
+    let message = success ? "Delete was successfull" : "Failed to delete schedule"
+
+    res.json({
+      success,
+      message
+    })
+
+  } catch (error) {
+    next(error)
   }
 }
 
@@ -301,5 +344,7 @@ module.exports = {
   setAvailability,
   getHosts,
   updateAvailability,
+  getMyAvailabilty,
   getHostsWithSchedules,
+  deleteMyAvailability
 };

@@ -217,6 +217,17 @@ async function getHostAvailabilty(hostId) {
   }
 }
 
+async function deleteMyAvailability(hostId) {
+  try {
+
+    const success = await Schedule.deleteOne({ host: hostId })
+    return success ? true : false
+
+  } catch (error) {
+    throw error
+  }
+}
+
 async function retrieveHosts() {
   try {
     const hosts = Users.find(
@@ -270,5 +281,6 @@ module.exports = {
   updateSchedule,
   getSchedules,
   getHostAvailabilty,
-  resetOldPassword
+  resetOldPassword,
+  deleteMyAvailability
 };

@@ -12,6 +12,8 @@ const {
   updateUser,
   setAvailability,
   updateAvailability,
+  getMyAvailabilty,
+  deleteMyAvailability,
   getHostsWithSchedules,
 } = require("../controllers/users");
 
@@ -20,8 +22,10 @@ router.get("/roles", authenticate, getRoles);
 router.get("/hosts-with-schedules", authenticate, getHostsWithSchedules);
 router.get("/:id", authenticate, getOneUser);
 
+router.get("/schedule/:hostId", authenticate, getMyAvailabilty);
 router.post("/schedule/:hostId", authenticate, setAvailability);
 router.patch("/schedule/:hostId", authenticate, updateAvailability);
+router.delete("/schedule/:hostId", authenticate, deleteMyAvailability);
 
 router.delete("/:id", authenticate, deleteUser);
 router.patch("/:id", authenticate, checkPasswordValidity, updateUser);
