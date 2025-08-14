@@ -187,6 +187,17 @@ async function remove(filter) {
 
 async function createSchedule(fields) {
   try {
+    // check if there is a schedule overlap
+    const overlap = await Schedule.findOne({
+      start_date: { $lt: fields.end_date },
+      end_date: { $gt: fields.start_date }
+    })
+
+    if (overlap) {
+      throw new CustomError("Schedule overlap, please select another time.", 400)
+    }
+
+    // if not create schedule
     const result = await Schedule.create(fields);
     return result;
   } catch (error) {
@@ -196,6 +207,17 @@ async function createSchedule(fields) {
 
 async function updateSchedule(updates, filter) {
   try {
+    // check if there is a schedule overlap
+    const overlap = await Schedule.findOne({
+      start_date: { $lt: updates.end_date },
+      end_date: { $gt: updates.start_date }
+    })
+
+    if (overlap) {
+      throw new CustomError("Schedule overlap, please select another time.", 400)
+    }
+
+    // if not then update
     const result = await Schedule.findOneAndUpdate(filter, updates, {
       runValidators: true,
     });
@@ -207,20 +229,20 @@ async function updateSchedule(updates, filter) {
 
 async function getHostAvailabilty(hostId) {
   try {
-    const schedule = await Schedule.findOne({ host: hostId })
+    const schedules = await Schedule.find({ host: hostId })
+      .sort({ start_date: 1 })
       .select("-__v")
       .lean();
 
-    return schedule;
+    return schedules;
   } catch (error) {
     throw error;
   }
 }
 
-async function deleteMyAvailability(hostId) {
+async function deleteMyAvailability(hostId, scheduleId) {
   try {
-
-    const success = await Schedule.deleteOne({ host: hostId })
+    const success = await Schedule.deleteOne({ _id: scheduleId, host: hostId })
     return success ? true : false
 
   } catch (error) {
