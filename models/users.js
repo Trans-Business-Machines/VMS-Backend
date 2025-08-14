@@ -189,6 +189,7 @@ async function createSchedule(fields) {
   try {
     // check if there is a schedule overlap
     const overlap = await Schedule.findOne({
+      host: fields.host,
       start_date: { $lt: fields.end_date },
       end_date: { $gt: fields.start_date }
     })
