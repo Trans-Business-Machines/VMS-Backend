@@ -38,8 +38,12 @@ async function sendEmail(user, password) {
             <li><strong>Password:</strong> ${password}</li>
           </ul>
 
-          <p>Please change your password upon login for security.</p>
-          ${user.role === "host" || user.role === "receptionist" && '<p>Also add you availability  on the Availability page</p>'}
+          ${(user.role === "host" || user.role === "receptionist")
+        ? '<p>The first thing to do is <b>set your availability </b> on the Availability page.</p>'
+        : ''}
+            
+            <p>Please <b>change your password </b> upon login for security.</p>
+          
         </div>
       </body>
     `,
