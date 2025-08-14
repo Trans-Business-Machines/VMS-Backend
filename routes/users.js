@@ -24,8 +24,9 @@ router.get("/:id", authenticate, getOneUser);
 
 router.get("/schedule/:hostId", authenticate, getMyAvailabilty);
 router.post("/schedule/:hostId", authenticate, setAvailability);
-router.patch("/schedule/:hostId", authenticate, updateAvailability);
-router.delete("/schedule/:hostId", authenticate, deleteMyAvailability);
+router.patch("/schedule/:hostId/:scheduleId", authenticate, updateAvailability);
+router.delete("/schedule/:hostId/:scheduleId", authenticate, deleteMyAvailability);
+
 
 router.delete("/:id", authenticate, deleteUser);
 router.patch("/:id", authenticate, checkPasswordValidity, updateUser);
