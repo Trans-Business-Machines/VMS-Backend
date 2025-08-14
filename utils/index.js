@@ -8,8 +8,15 @@ class AppError extends Error {
   }
 }
 
-class AuthError extends AppError {}
-class CustomError extends AppError {}
+class AuthError extends AppError { }
+class CustomError extends AppError { }
+
+class ScheduleError extends AppError {
+  constructor(message, statusCode, details = {}) {
+    super(message, statusCode)
+    this.details = details
+  }
+}
 
 // This object defines the various purposes for which a visit can be made.
 // Add other purposes as needed.
@@ -52,6 +59,7 @@ const visitPurposes = [
 module.exports = {
   AuthError,
   CustomError,
+  ScheduleError,
   VisitPurpose,
   visitPurposes,
 };
