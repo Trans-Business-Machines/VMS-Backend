@@ -25,7 +25,7 @@ const app = express();
 // Define allowed front-end origins
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://frontend-2-beta-swart.vercel.app",
+  "https://frontend-2-wheat.vercel.app"
 ]
 
 // Middleware to parse request bodies, cookies, and also allow cors
