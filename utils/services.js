@@ -1,41 +1,44 @@
 const crypto = require("node:crypto")
-const { isAfter, isBefore, format } = require("date-fns");
-const { CustomError } = require("./");
+const { isAfter, isBefore } = require("date-fns");
+const { ScheduleError, CustomError } = require("./");
 
-async function isHostAvailable(visitorData, currentDate, getHostAvailabilty) {
-  const schedule = await getHostAvailabilty(visitorData.host);
+async function isHostAvailable(visitorData, getHostAvailabilty) {
+  const schedules = await getHostAvailabilty(visitorData.host);
 
-  if (!schedule) {
-    throw new CustomError(
-      "This host has no schedule yet. Please contact the reception or select another host.",
-      400
-    );
+  // if the length is 0 or the schedulles array is null - return no availability set
+  if (schedules.length === 0 || !schedules) {
+    // throw an error - no availability set
+    throw new CustomError("No schedule set for the selected host.")
   }
 
-  const start = new Date(schedule.start_date);
-  const end = new Date(schedule.end_date);
+  // parse the time_in 
+  const timeIn = new Date(visitorData.time_in)
 
-  if (isBefore(currentDate, start)) {
-    throw new CustomError(
-      `The host is not yet available. Their availability starts on ${format(
-        start,
-        "PPP"
-      )}. Please choose another host.`,
-      400
-    );
+  for (let i = 0; i < schedules.length; i++) {
+    const current = schedules[i]
+    const nextSchedule = schedules[i + 1]
+
+    const currentStart = new Date(current.start_date)
+    const currentEnd = new Date(current.end_date)
+
+    if (isBefore(timeIn, currentStart)) {
+      // throw an error  - return  currentStart time in message
+      throw new ScheduleError("Host is unavailable", 500, { availableAt: current.start_date })
+    }
+
+    if (isAfter(timeIn, currentEnd)) {
+      if (nextSchedule) {
+        throw new ScheduleError("Host is unavailable", 500, { availableAt: nextSchedule.start_date });
+      } else {
+        throw new CustomError("No further availability set.")
+      }
+    }
+
+    if (!isBefore(timeIn, currentStart) && !isAfter(timeIn, currentEnd)) {
+      return true;
+    }
   }
-
-  if (isAfter(currentDate, end)) {
-    throw new CustomError(
-      `The host's availability ended on ${format(
-        end,
-        "PPP"
-      )}. Please choose another host.`,
-      400
-    );
-  }
-
-  return true;
+  return false
 }
 
 function validateSubscription(subscription) {
