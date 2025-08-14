@@ -106,8 +106,6 @@ async function setAvailability(req, res, next) {
 
   const fields = req.body;
 
-  fields.start_date = new Date(fields.start_date).getTime();
-  fields.end_date = new Date(fields.end_date).getTime();
   fields.host = hostId;
 
   try {
@@ -132,10 +130,8 @@ async function getMyAvailabilty(req, res, next) {
   }
 
   try {
-
-    const hostAvailability = await Users.getHostAvailabilty(requesterId)
-    res.json({ success: true, schedule: hostAvailability })
-
+    const schedules = await Users.getHostAvailabilty(requesterId)
+    res.json({ success: true, schedules })
   } catch (error) {
     next(error)
   }
@@ -145,6 +141,7 @@ async function getMyAvailabilty(req, res, next) {
 async function updateAvailability(req, res, next) {
   const user = req.user;
   const hostId = req.params.hostId;
+  const scheduleId = req.params.scheduleId
 
   if (!["host", "receptionist"].includes(user.role)) {
     return next(
@@ -173,7 +170,7 @@ async function updateAvailability(req, res, next) {
   }
 
   try {
-    const result = await Users.updateSchedule(updates, { host: hostId });
+    const result = await Users.updateSchedule(updates, { _id: scheduleId, host: hostId });
 
     if (!result) {
       throw new CustomError("Schedule not found or is already deleted!", 404);
@@ -191,6 +188,7 @@ async function updateAvailability(req, res, next) {
 async function deleteMyAvailability(req, res, next) {
   const user = req.user;
   const requesterId = req.params.hostId
+  const scheduleId = req.params.scheduleId
 
   if (user.userId !== requesterId) {
     return next(new AuthError("Forbidden, You can only delete your schedules", 403))
@@ -198,7 +196,7 @@ async function deleteMyAvailability(req, res, next) {
 
   try {
 
-    const success = Users.deleteMyAvailability(requesterId)
+    const success = Users.deleteMyAvailability(requesterId, scheduleId)
 
     let message = success ? "Delete was successfull" : "Failed to delete schedule"
 

@@ -11,9 +11,9 @@ const { isHostAvailable } = require("../../utils/services");
 async function createVisit(req, res, next) {
   const user = req.user;
 
-  if (!["super admin", "admin", "soldier"].includes(user.role)) {
+  if (!["soldier"].includes(user.role)) {
     throw new AuthError(
-      "Forbidden, only a soldier or an admin can create new visits.",
+      "Forbidden, only a soldier can create new visits.",
       403
     );
   }
@@ -23,7 +23,6 @@ async function createVisit(req, res, next) {
   try {
     const hostAvailable = await isHostAvailable(
       visitor,
-      new Date(),
       getHostAvailabilty
     );
 
@@ -146,9 +145,9 @@ async function getHostVisits(req, res, next) {
 
   if (user.role === "host" && hostId === user.userId) {
     // get logs
-    const limit = 10;
+    const limit = isToday ? 4 : 10;
     const offset = Math.max((page - 1) * limit, 0);
-    
+
     const opts = {
       limit,
       offset,
