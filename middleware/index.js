@@ -46,6 +46,10 @@ function handleError(err, req, res, next) {
     errorResponse.errors = fieldErrors;
   }
 
+  if (err.details) {
+    errorResponse.details = err.details
+  }
+
   res.status(statusCode).json(errorResponse);
 }
 
