@@ -127,7 +127,6 @@ const visitSchema = new mongoose.Schema({
   time_in: {
     type: Date,
     required: true,
-    default: Date.now,
   },
   time_out: {
     type: Date,
