@@ -107,8 +107,10 @@ vms-backend/
 
 ### Schedule Endpoints
 
-- `POST /api/schedule/:id` – Create availability schedule for host/receptionist
-- `PATCH /api/schedule/:id` – Update availability
+- `GET /api/schedule/:hostId` – Get all schedules for a host or receptionist.
+- `POST /api/schedule/:hostId` – Create availability schedule for a host or receptionist
+- `PATCH /api/schedule/:hostId/:scheduleId` – Update a single schedule for host or receptionist
+- `DELETE /api/schedule/:hostId/:scheduleId` – Delete a single schedule for host or receptionist
 
 ### Notifications Endpoints
 
