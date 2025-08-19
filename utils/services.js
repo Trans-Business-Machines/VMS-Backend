@@ -1,5 +1,5 @@
 const crypto = require("node:crypto")
-const { isAfter, isBefore } = require("date-fns");
+const { isAfter, isBefore, parseISO } = require("date-fns");
 const { ScheduleError, CustomError } = require("./");
 
 async function isHostAvailable(visitorData, getHostAvailabilty) {
@@ -11,34 +11,31 @@ async function isHostAvailable(visitorData, getHostAvailabilty) {
     throw new CustomError("No schedule set for the selected host.")
   }
 
-  // parse the time_in 
-  const timeIn = new Date(visitorData.time_in)
+  // parse the time_in into a date object
+  const timeIn = parseISO(visitorData.time_in)
 
-  for (let i = 0; i < schedules.length; i++) {
-    const current = schedules[i]
-    const nextSchedule = schedules[i + 1]
+  // check if a time_in falls within an availability slot
+  for (const schedule of schedules) {
+    const start = schedule.start_date
+    const end = schedule.end_date
 
-    const currentStart = new Date(current.start_date)
-    const currentEnd = new Date(current.end_date)
-
-    if (isBefore(timeIn, currentStart)) {
-      // throw an error  - return  currentStart time in message
-      throw new ScheduleError("Host is unavailable", 500, { availableAt: current.start_date })
-    }
-
-    if (isAfter(timeIn, currentEnd)) {
-      if (nextSchedule) {
-        throw new ScheduleError("Host is unavailable", 500, { availableAt: nextSchedule.start_date });
-      } else {
-        throw new CustomError("No further availability set.")
-      }
-    }
-
-    if (!isBefore(timeIn, currentStart) && !isAfter(timeIn, currentEnd)) {
-      return true;
+    // if time in is not before start and not after end then host is available
+    if (!isBefore(timeIn, start) && !isAfter(timeIn, end)) {
+      return true
     }
   }
-  return false
+
+  // if no matching slot, find the next upcomming availability
+  const futureAvailabilities = schedules.filter(s => isAfter(s.start_date, timeIn))
+
+  if (futureAvailabilities.length > 0) {
+    throw new ScheduleError("Host is unavailable", 500, {
+      availableAt: futureAvailabilities[0].start_date
+    })
+  } else {
+    throw new CustomError("No further availability set")
+  }
+
 }
 
 function validateSubscription(subscription) {
