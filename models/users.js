@@ -206,10 +206,25 @@ async function createSchedule(fields) {
   }
 }
 
-async function updateSchedule(updates, filter) {
+async function getHostAvailabilty(hostId) {
+  try {
+    const schedules = await Schedule.find({ host: hostId })
+      .sort({ start_date: 1 })
+      .select("-__v")
+      .lean();
+
+    return schedules;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function updateSchedule(updates, filters) {
   try {
     // check if there is a schedule overlap
     const overlap = await Schedule.findOne({
+      host: filters.host,
+      _id: { $ne: filters._id },
       start_date: { $lt: updates.end_date },
       end_date: { $gt: updates.start_date }
     })
@@ -219,23 +234,10 @@ async function updateSchedule(updates, filter) {
     }
 
     // if not then update
-    const result = await Schedule.findOneAndUpdate(filter, updates, {
+    const result = await Schedule.findOneAndUpdate(filters, updates, {
       runValidators: true,
     });
     return result;
-  } catch (error) {
-    throw error;
-  }
-}
-
-async function getHostAvailabilty(hostId) {
-  try {
-    const schedules = await Schedule.find({ host: hostId })
-      .sort({ start_date: 1 })
-      .select("-__v")
-      .lean();
-
-    return schedules;
   } catch (error) {
     throw error;
   }
